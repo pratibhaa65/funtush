@@ -1,0 +1,40 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect project files
+        run: |
+          if [ -f package.json ]; then
+            echo "package.json found"
+          else
+            echo "No package.json found yet."
+          fi
+
+      - name: Install dependencies
+        if: hashFiles('package.json') != ''
+        run: npm ci
+
+      - name: Lint
+        if: hashFiles('package.json') != ''
+        run: npm run lint
+
+      - name: Test
+        if: hashFiles('package.json') != ''
+        run: npm test -- --ci
+
+      - name: Build
+        if: hashFiles('package.json') != ''
+        run: npm run build
