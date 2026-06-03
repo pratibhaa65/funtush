@@ -20,8 +20,6 @@ npm install bcrypt jsonwebtoken
 
 ## Environment Variables
 
-Create a `.env` file : [text](apps/api/.env)
-
 ```env
 JWT_ACCESS_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
