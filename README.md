@@ -1,7 +1,6 @@
-# Auth Package 
+# Auth Package
 
-This package provides a reusable authentication utility module for Node.js + TypeScript applications. It is designed to handle secure user authentication features such as password hashing, JWT token generation, and token verification.
-
+A reusable authentication utility module for Node.js + TypeScript applications, handling password hashing, JWT token generation, and token verification.
 
 ## Features
 
@@ -12,28 +11,39 @@ This package provides a reusable authentication utility module for Node.js + Typ
 - Password comparison utility
 - Type-safe with TypeScript
 
+## Tech Stack
+
+- Node.js
+- TypeScript
+- bcrypt
+- jsonwebtoken
 
 ## Installation
 
+```bash
 npm install bcrypt jsonwebtoken
-
+```
 
 ## Environment Variables
 
+Create a `.env` file : [text](apps/api/.env)
+
+```env
 JWT_ACCESS_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
+```
 
+## Project Structure
 
-## Structure
-
+```
 packages/auth/
- ├── jwt.ts
- ├── password.ts
- ├── otp.ts
- ├── middleware.ts
- ├── types.ts
- ├── index.ts
-
+├── index.ts
+├── jwt.ts
+├── middleware.ts
+├── otp.ts
+├── password.ts
+└── types.ts
+```
 
 ## Tech Stack
 
