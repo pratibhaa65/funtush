@@ -1,10 +1,5 @@
-export {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyAccessToken,
-} from "./jwt";
+export * from "./jwt";
+export * from "./password";
+export * from "./otp";
+export * from "./middleware";
 
-export {
-  hashPassword,
-  comparePassword,
-} from "./password";

@@ -13,6 +13,7 @@ export type Role = platformRole | tenantRole | "trekker";
 export type jwtPayload = {
     userId: string;
     roleType: RoleType;
-    role: Role;    
+    role: Role;  
+    permissions?: string[];  
     agencyId?: string; // Optional, only for tenant users
 };
