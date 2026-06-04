@@ -10,13 +10,10 @@ export const startSubscriptionCron = () => {
 
             await lockExpiredAgencies();
 
-            return {
-                success: true,
-                message: "Subscription expiry job ran successfully"
-            };
+            console.log("Subscription expiry job ran successfully");
 
-        } catch (error: any) {
-            throw new Error("Cron job failed:", error.message);
+        } catch (err) {
+            console.log("Cron job failed:", err);
         }
 
     });

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { agencySubscription, createAgency, getSubscription } from "../services/agency.service";
+import type { AgencyRequest } from "../types/auth-request";
 
 export const registerAcency = async (req: Request, res: Response) => {
     try {
@@ -8,10 +9,10 @@ export const registerAcency = async (req: Request, res: Response) => {
             status: "success",
             data: newAgency
         });
-    } catch (err: any) {
-        res.status(err.status || 500).json({
+    } catch (err) {
+        res.status(500).json({
             status: "error",
-            message: err.message
+            message: err
         });
     }
 };
@@ -23,18 +24,25 @@ export const getSubscriptionTiers = async (req: Request, res: Response) => {
             status: "success",
             data: tiers
         });
-    } catch (err: any) {
-        res.status(err.status || 500).json({
+    } catch (err) {
+        res.status(500).json({
             status: "error",
-            message: err.message
+            message: err
         });
     }
 };
 
-export const updateAgencySubscription = async (req: any, res: Response) => {
+export const updateAgencySubscription = async (req: AgencyRequest, res: Response) => {
     try {
-        const agencyId = req.agencyUser.id;
+        const agencyId = req.agencyUser?.id;
         const { tier } = req.body;
+
+        if (!agencyId) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized",
+            });
+        }
 
         const result = await agencySubscription(agencyId, tier);
 
@@ -42,11 +50,10 @@ export const updateAgencySubscription = async (req: any, res: Response) => {
             success: true,
             data: result,
         });
-    } catch (err: unknown) {
-        const error = err as { status?: number; message?: string };
-        res.status(error.status ?? 500).json({
+    } catch (err) {
+        res.status(500).json({
             status: "error",
-            message: error.message ?? "Internal Server Error"
+            message: err
         });
     }
 };
