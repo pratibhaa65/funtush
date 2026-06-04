@@ -36,8 +36,13 @@ export const RolesController = {
             });
 
             return res.status(201).json({ success: true, data: newRole });
-        } catch (error: any) {
-            if (error.code === 'P2002') {
+        } catch (error: unknown) {
+            if (
+                typeof error === 'object' &&
+                error !== null &&
+                'code' in error &&
+                (error as { code: string }).code === 'P2002'
+            ) {
                 return res.status(409).json({
                     success: false,
                     error: "Conflict: A role with this name already exists within your agency."
@@ -71,7 +76,7 @@ export const RolesController = {
             ]);
 
             return res.status(200).json({ success: true, message: "Permissions synchronized." });
-        } catch (error) {
+        } catch {
             return res.status(500).json({ success: false, error: "Internal Server Error." });
         }
     },
@@ -99,7 +104,7 @@ export const RolesController = {
             }));
 
             return res.status(200).json({ success: true, data: formattedRoles });
-        } catch (error) {
+        } catch {
             return res.status(500).json({ success: false, error: "Internal Server Error." });
         }
     },
@@ -111,8 +116,13 @@ export const RolesController = {
 
             // FIX: Guard check modified to raw check or optional chain to survive Day 1 empty-db stubs cleanly
             // if agencyStaff target does not exist on your client delegate yet, we fall back to a safe 0 compile guard
-            const activeStaffUsingRole = 'agencyStaff' in prisma
-                ? await (prisma as any).agencyStaff.count({ where: { roleId, isActive: true } })
+            const staffClient = prisma as unknown as {
+                agencyStaff?: {
+                    count: (args: { where: { roleId: string; isActive: boolean } }) => Promise<number>;
+                };
+            };
+            const activeStaffUsingRole = staffClient.agencyStaff
+                ? await staffClient.agencyStaff.count({ where: { roleId, isActive: true } })
                 : 0;
 
             if (activeStaffUsingRole > 0) {
@@ -124,7 +134,7 @@ export const RolesController = {
 
             await prisma.role.delete({ where: { id: roleId } });
             return res.status(204).send();
-        } catch (error) {
+        } catch {
             return res.status(500).json({ success: false, error: "Internal Server Error." });
         }
     }

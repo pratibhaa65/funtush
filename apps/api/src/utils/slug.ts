@@ -1,4 +1,8 @@
-export const generateSlug = async (company_name: string, pool: any) => {
+type QueryablePool = {
+  query: (query: string, values: readonly unknown[]) => Promise<{ rows: unknown[] }>;
+};
+
+export const generateSlug = async (company_name: string, pool: QueryablePool) => {
 
   const baseSlug = company_name
     .toLowerCase()
