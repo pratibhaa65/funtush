@@ -9,10 +9,11 @@ export const registerAcency = async (req: Request, res: Response) => {
             status: "success",
             data: result
         });
-    } catch (err: any) {
-        res.status(err.status || 500).json({
+    } catch (err) {
+        const error = err as { status?: number; message?: string };
+        res.status(error.status || 500).json({
             status: "error",
-            message: err.message
+            message: error.message
         });
     }
 };
