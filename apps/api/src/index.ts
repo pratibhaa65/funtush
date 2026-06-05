@@ -1,4 +1,6 @@
 import express, { type Request, type Response } from "express";
+import { db, redis } from "@funtush/database";
+
 
 import agencyRoutes from './routes/agency.routes';
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job";
@@ -15,8 +17,18 @@ app.use('/', agencyRoutes);
 
 
 // Liveness probe consumed by Prometheus / the load balancer.
-app.get("/health", (_req: Request, res: Response) => {
-  res.json({ status: "ok", service: "funtush-api" });
+app.get("/health", async (_req: Request, res: Response) => {
+  const [dbOk, redisOk] = await Promise.all([
+    db.query("SELECT 1").then(() => true).catch(() => false),
+    redis.ping().then((r) => r === "PONG").catch(() => false),
+  ]);
+
+  const ok = dbOk && redisOk;
+  res.status(ok ? 200 : 503).json({
+    status: ok ? "ok" : "error",
+    db: dbOk ? "ok" : "error",
+    redis: redisOk ? "ok" : "error",
+  });
 });
 
 app.listen(port, () => {
