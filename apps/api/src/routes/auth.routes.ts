@@ -50,10 +50,10 @@ router.post("/register", async (req, res) => {
     const result = await registerTrekker(email, password);
 
     res.status(201).json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     res.status(400).json({
-      message: error.message || "Registration failed",
+      message:"Registration failed",
     });
   }
 });
@@ -67,10 +67,10 @@ router.post("/verify-otp", async (req, res) => {
     const result = await verifyOtp(userId, otp);
 
     res.json(result);
-  } catch (error: any) {
+  } catch (error) {
     console.error(error);
     res.status(400).json({
-      message: error.message || "OTP verification failed",
+      message: "OTP verification failed",
     });
   }
 });

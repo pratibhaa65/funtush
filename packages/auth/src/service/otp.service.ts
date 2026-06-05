@@ -2,7 +2,7 @@ import { prisma } from "@funtush/database";
 import { verifyOTP } from "../otp";
 
 export async function verifyOtp(userId: string, otp: string) {
-  const db = prisma as typeof prisma & { trekker: any };
+  const db = prisma;
 
   const user = await db.trekker.findUnique({ where: { id: userId } });
 

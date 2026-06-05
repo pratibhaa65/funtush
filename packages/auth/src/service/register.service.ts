@@ -2,7 +2,7 @@ import { prisma } from "@funtush/database";
 import bcrypt from "bcrypt";
 
 export async function registerTrekker(email: string, password: string) {
-  const db = prisma as typeof prisma & { trekker: any };
+  const db = prisma;
 
   const existing = await db.trekker.findUnique({ where: { email } });
 

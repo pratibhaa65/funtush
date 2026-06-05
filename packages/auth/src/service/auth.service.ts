@@ -82,7 +82,7 @@ export async function agencyLogin(email: string, password: string) {
 
 // trekker login
 export async function trekkerLogin(email: string, password: string) {
-  const db = prisma as typeof prisma & { trekker: any };
+  const db = prisma;
 
   const user = await db.trekker.findUnique({
     where: { email },

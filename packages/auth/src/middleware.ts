@@ -21,7 +21,8 @@ export const requireAuth = (
     req.user = decoded;
 
     next();
-  } catch (err: any) {
+  } catch (err) {
+    console.error("Auth error:", err);
     return res.status(401).json({
       message: "Unauthorized",
     });
@@ -38,10 +39,12 @@ export const requireRole = (roles: string[]) => {
     const user = req.user;
 
     if (!user) {
+      console.error("Auth error: User not found");
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     if (!roles.includes(user.role)) {
+      console.error("Auth error: Role not allowed");
       return res.status(403).json({ message: "Forbidden: role not allowed" });
     }
 
@@ -53,19 +56,21 @@ export const requireRole = (roles: string[]) => {
 // permission based access control
 export const requirePermission = (permission: string) => {
   return (
-    req: Request & { user?: any },
+    req: Request & { user?: jwtPayload },
     res: Response,
     next: NextFunction
   ) => {
     const user = req.user;
 
     if (!user) {
+      console.error("Auth error: User not found");
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     const permissions = user.permissions ?? [];
 
     if (!permissions.includes(permission)) {
+      console.error("Auth error: Missing permission");
       return res.status(403).json({
         message: "Forbidden: missing permission",
       });
