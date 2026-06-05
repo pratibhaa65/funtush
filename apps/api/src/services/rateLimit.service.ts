@@ -40,11 +40,11 @@ export async function checkRateLimit(
   const redisKey = `ratelimit:${ip}:${method.toUpperCase()}:${path}`;
 
   try {
-    // Atomic increment + set TTL on first request
+   
     const count = await redis.incr(redisKey);
 
     if (count === 1) {
-      // First request in this window — set expiry
+     
       await redis.expire(redisKey, config.windowSecs);
     }
 
