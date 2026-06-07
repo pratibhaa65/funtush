@@ -68,6 +68,9 @@ importers:
       express:
         specifier: ^4.22.2
         version: 4.22.2
+      multer:
+        specifier: 1.4.5-lts.1
+        version: 1.4.5-lts.1
       node-cron:
         specifier: ^3.0.3
         version: 3.0.3
