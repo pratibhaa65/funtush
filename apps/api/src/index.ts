@@ -1,14 +1,16 @@
-import express, { type Request, type Response } from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
+import { MulterError } from "multer";
 import { db, redis } from "@funtush/database";
-
+import uploadRoutes from "./routes/upload.routes";
 
 import agencyRoutes from './routes/agency.routes';
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job";
 
 const app = express();
+const port = Number(process.env.PORT ?? 4000);
 
 app.use(express.json());
-
+app.use("/", uploadRoutes);
 app.use('/', agencyRoutes);
 
 
@@ -27,18 +29,24 @@ app.get("/health", async (_req: Request, res: Response) => {
   });
 });
 
-// Side effects (server + cron) are skipped under test so the `app` export can be
-// imported and exercised in isolation without binding a port or scheduling jobs.
-if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
-  const port = Number(process.env.PORT ?? 4000);
+// Global error handler
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof MulterError && err.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ error: "File too large. Max 10MB allowed." });
+  }
+  const message = err instanceof Error ? err.message : "Internal server error";
+  if (message.includes("Invalid file type")) {
+    return res.status(400).json({ error: message });
+  }
+  return res.status(500).json({ error: message });
+});
 
-  // For cron job
+if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
   startSubscriptionCron();
 
   app.listen(port, () => {
     console.log(`Funtush API listening on port ${port}`);
   });
 }
-
 
 export { app };
