@@ -1,16 +1,11 @@
-<<<<<<< HEAD
 import express, { type Request, type Response, type NextFunction } from "express";
 import { MulterError } from "multer";
 import { redis } from "@funtush/database";
-import uploadRoutes from "./routes/upload.routes";
-import authRoutes from "./routes/auth.routes";
-=======
-import express, { type Request, type Response } from "express";
+import uploadRoutes from "./routes/upload.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import agencyRoutes from "./routes/agency.routes.js";
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";
 import dotenv from "dotenv";
->>>>>>> 951db2a (fix)
 
 dotenv.config();
 
@@ -27,7 +22,7 @@ app.use("/auth", authRoutes);
 app.get("/health", async (_req: Request, res: Response) => {
   const [dbOk, redisOk] = await Promise.all([
     Promise.resolve(true),
-    redis.ping().then((r) => r === "PONG").catch(() => false),
+    redis.ping().then((r: string) => r === "PONG").catch(() => false),
   ]);
 
   const ok = dbOk && redisOk;

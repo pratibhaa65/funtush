@@ -180,11 +180,7 @@ export const updateAgencyProfileService = async (data: AgencyInfo, agencyId: str
   }
 
   for (const key in fieldMap) {
-<<<<<<< HEAD
     const value = (data as Record<string, string | null>)[key];
-=======
-    const value = data[key as keyof AgencyInfo];
->>>>>>> 951db2a (fix)
 
     if (value !== undefined) {
       fields.push(`${fieldMap[key]} = $${index++}`);
