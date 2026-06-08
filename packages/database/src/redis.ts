@@ -1,4 +1,4 @@
-import Redis from "ioredis";
+import Redis, { type Redis as RedisClient } from "ioredis";
 
 /**
  * Single shared Redis client (Backend Guide §3: sessions, rate limiting,
@@ -7,7 +7,7 @@ import Redis from "ioredis";
 // ioredis typings can sometimes expose a module namespace rather than a
 // constructable class depending on TS config. Normalize to a constructor
 // at runtime to avoid "not constructable" errors.
-const RedisConstructor = Redis as unknown as new (connectionUrl: string) => any;
+const RedisConstructor = Redis as unknown as new (connectionUrl: string) => RedisClient;
 
 export const redis = new RedisConstructor(
   process.env.REDIS_URL ?? "redis://localhost:6379"
