@@ -12,11 +12,11 @@ router.post("/admin/login", validate(loginSchema), async (req, res) => {
     const result = await adminLogin(req.body.email, req.body.password);
     res.json(result);
   } catch (error) {
-    console.error(error);
-    res.status(401).json({ message: "Invalid credentials" });
+    const message = error instanceof Error ? error.message : "Invalid credentials";
+    const status = message.includes("temporarily blocked") ? 429 : 401;
+    res.status(status).json({ message });
   }
 });
-
 
 // tenant(agency) user login
 router.post("/agency/login", validate(loginSchema), async (req, res) => {
@@ -24,11 +24,11 @@ router.post("/agency/login", validate(loginSchema), async (req, res) => {
     const result = await agencyLogin(req.body.email, req.body.password);
     res.json(result);
   } catch (error) {
-    console.error(error);
-    res.status(401).json({ message: "Invalid credentials" });
+    const message = error instanceof Error ? error.message : "Invalid credentials";
+    const status = message.includes("temporarily blocked") ? 429 : 401;
+    res.status(status).json({ message });
   }
 });
-
 
 // trekker login
 router.post("/trekker/login", validate(loginSchema), async (req, res) => {
@@ -36,11 +36,11 @@ router.post("/trekker/login", validate(loginSchema), async (req, res) => {
     const result = await trekkerLogin(req.body.email, req.body.password);
     res.json(result);
   } catch (error) {
-    console.error(error);
-    res.status(401).json({ message: "Invalid credentials" });
+    const message = error instanceof Error ? error.message : "Invalid credentials";
+    const status = message.includes("temporarily blocked") ? 429 : 401;
+    res.status(status).json({ message });
   }
 });
-
 
 // trekker registration
 router.post("/register", async (req, res) => {
@@ -57,7 +57,6 @@ router.post("/register", async (req, res) => {
     });
   }
 });
-
 
 // OTP verification
 router.post("/verify-otp", async (req, res) => {
@@ -85,7 +84,7 @@ router.get("/me", requireAuth, (req, res) => {
 
 export default router;
 
-// refresh token 
+// refresh token
 router.post("/refresh", async (req, res) => {
   try {
     const { refreshToken } = req.body;

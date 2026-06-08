@@ -24,12 +24,15 @@ export async function adminLogin(email: string, password: string) {
   email = email.toLowerCase().trim();
 
   if (await isLocked(email)) {
-    throw new Error("Account locked. Try again later.");
+    throw new Error(
+      "Your account has been temporarily blocked due to too many unsuccessful attempts. Please try again after 15 minutes."
+    );
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || user.role !== "SUPER_ADMIN") {
+    await registerFailedAttempt(email);
     throw new Error("Invalid credentials");
   }
 
@@ -39,8 +42,8 @@ export async function adminLogin(email: string, password: string) {
     await registerFailedAttempt(email);
     throw new Error("Invalid credentials");
   }
-  await resetAttempts(email);
 
+  await resetAttempts(email);
 
   const accessToken = generateAccessToken({
     userId: user.id,
@@ -66,7 +69,9 @@ export async function agencyLogin(email: string, password: string) {
   email = email.toLowerCase().trim();
 
   if (await isLocked(email)) {
-    throw new Error("Account locked. Try again later.");
+    throw new Error(
+      "Your account has been temporarily blocked due to too many unsuccessful attempts. Please try again after 15 minutes."
+    );
   }
 
   const user = await prisma.user.findUnique({
@@ -75,20 +80,26 @@ export async function agencyLogin(email: string, password: string) {
   });
 
   if (!user || user.role !== "AGENCY_ADMIN") {
+    await registerFailedAttempt(email);
     throw new Error("Invalid credentials");
   }
 
-  if (!user.agency) throw new Error("Agency not found");
+  if (!user.agency) {
+    await registerFailedAttempt(email);
+    throw new Error("Invalid credentials");
+  }
 
   if (["LOCKED", "SUSPENDED"].includes(user.agency.status)) {
     throw new Error("Agency blocked");
   }
 
   const ok = await comparePassword(password, user.passwordHash);
+
   if (!ok) {
     await registerFailedAttempt(email);
     throw new Error("Invalid credentials");
   }
+
   await resetAttempts(email);
 
   const accessToken = generateAccessToken({
@@ -116,7 +127,9 @@ export async function trekkerLogin(email: string, password: string) {
   email = email.toLowerCase().trim();
 
   if (await isLocked(email)) {
-    throw new Error("Account locked. Try again later.");
+    throw new Error(
+      "Your account has been temporarily blocked due to too many unsuccessful attempts. Please try again after 15 minutes."
+    );
   }
 
   const user = await prisma.user.findUnique({
@@ -125,14 +138,17 @@ export async function trekkerLogin(email: string, password: string) {
   });
 
   if (!user || !user.trekker) {
+    await registerFailedAttempt(email);
     throw new Error("Invalid credentials");
   }
 
   const ok = await comparePassword(password, user.passwordHash);
+
   if (!ok) {
     await registerFailedAttempt(email);
     throw new Error("Invalid credentials");
   }
+
   await resetAttempts(email);
 
   const accessToken = generateAccessToken({
