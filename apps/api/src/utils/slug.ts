@@ -1,10 +1,10 @@
-type QueryablePool = {
-  query: (query: string, values: readonly unknown[]) => Promise<{ rows: unknown[] }>;
-};
+import { PrismaClient } from "@prisma/client";
 
-export const generateSlug = async (company_name: string, pool: QueryablePool) => {
 
-  const baseSlug = company_name
+export const generateSlug = async (name: string,
+  prisma: PrismaClient): Promise<string> => {
+
+  const baseSlug = name
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
@@ -14,16 +14,15 @@ export const generateSlug = async (company_name: string, pool: QueryablePool) =>
   let counter = 1;
 
   while (true) {
-    const result = await pool.query(
-      "SELECT * FROM agency WHERE slug = $1",
-      [slug]
-    );
+    const existing = await prisma.agency.findUnique({
+      where: { slug },
+    });
 
-    if (result.rows.length === 0) {
-      return slug;
-    }
+    if (!existing) break;
 
+    slug = `${baseSlug}-${counter}`;
     counter++;
-    slug = `${baseSlug}${counter}`;
   }
+
+  return slug;
 };

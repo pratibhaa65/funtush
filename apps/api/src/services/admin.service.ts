@@ -1,23 +1,32 @@
-import { db } from "@funtush/database/src/db";
+import { db } from "@funtush/database";
+
 
 export const approveAgencyKYCService = async (
   agencyId: string
 ) => {
-  const result = await db.query(
-    `
-    UPDATE kyc_submissions
-    SET
-      status = 'APPROVED',
-      reviewed_at = NOW(),
-      rejection_reason = NULL
-    WHERE agency_id = $1
-    RETURNING *
-    `,
-    [agencyId]
-  );
+  const kyc = await db.kycSubmission.findUnique({
+    where: {
+      agencyId,
+    },
+  });
+
+  if (!kyc) {
+    throw new Error("KYC not found");
+  }
+
+  const updatedKyc = await db.kycSubmission.update({
+    where: {
+      agencyId,
+    },
+    data: {
+      status: "APPROVED",
+      reviewedAt: new Date(),
+      rejectionReason: null,
+    },
+  });
 
   return {
-    kyc: result.rows[0],
+    kyc: updatedKyc,
     message: "KYC approved successfully",
   };
 };
@@ -27,21 +36,29 @@ export const rejectAgencyKYCService = async (
   agencyId: string,
   reason: string
 ) => {
-  const result = await db.query(
-    `
-    UPDATE kyc_submissions
-    SET
-      status = 'REJECTED',
-      rejection_reason = $1,
-      reviewed_at = NOW()
-    WHERE agency_id = $2
-    RETURNING *
-    `,
-    [reason, agencyId]
-  );
+  const kyc = await db.kycSubmission.findUnique({
+    where: {
+      agencyId,
+    },
+  });
+
+  if (!kyc) {
+    throw new Error("KYC not found");
+  }
+
+  const updatedKyc = await db.kycSubmission.update({
+    where: {
+      agencyId,
+    },
+    data: {
+      status: "REJECTED",
+      rejectionReason: reason,
+      reviewedAt: new Date(),
+    },
+  });
 
   return {
-    kyc: result.rows[0],
+    kyc: updatedKyc,
     message: "KYC rejected",
   };
 };
