@@ -1,8 +1,15 @@
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 
+type PrismaAgency = {
+  findUnique: (args: any) => Promise<any>;
+};
+
+type PrismaLike = {
+  agency: PrismaAgency;
+};
 
 export const generateSlug = async (name: string,
-  prisma: PrismaClient): Promise<string> => {
+  prisma: PrismaLike): Promise<string> => {
 
   const baseSlug = name
     .toLowerCase()
@@ -20,8 +27,9 @@ export const generateSlug = async (name: string,
 
     if (!existing) break;
 
-    slug = `${baseSlug}-${counter}`;
+  
     counter++;
+    slug = `${baseSlug}-${counter}`;
   }
 
   return slug;
