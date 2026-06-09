@@ -63,11 +63,11 @@ export const acceptBooking = async (
 ) => {
     try {
         const agencyId = req.agencyId;
-        const bookingId = req.params.bookingId;
+        // const bookingId = req.params.bookingId;
 
-        if (!bookingId || Array.isArray(bookingId)) {
-            throw new Error("Invalid bookingId");
-        }
+        // if (!bookingId || Array.isArray(bookingId)) {
+        //     throw new Error("Invalid bookingId");
+        // }
 
         if (!agencyId) {
             return res.status(401).json({
@@ -76,7 +76,10 @@ export const acceptBooking = async (
             });
         }
 
-        const result = await acceptBookingService(agencyId, bookingId);
+        const result = await acceptBookingService(
+            agencyId,
+            // bookingId
+        );
 
         return res.status(200).json({
             success: true,
@@ -97,11 +100,11 @@ export const publishPackage = async (
 ) => {
     try {
         const agencyId = req.agencyId;
-        const packageId = req.params.packageId;
+        // const packageId = req.params.packageId;
 
-        if (!packageId || Array.isArray(packageId)) {
-            throw new Error("Invalid packageId");
-        }
+        // if (!packageId || Array.isArray(packageId)) {
+        //     throw new Error("Invalid packageId");
+        // }
 
         if (!agencyId) {
             return res.status(401).json({
@@ -110,7 +113,10 @@ export const publishPackage = async (
             });
         }
 
-        const result = await publishPackageService(agencyId, packageId);
+        const result = await publishPackageService(
+            agencyId,
+            // packageId
+        );
 
         return res.status(200).json({
             success: true,
@@ -170,11 +176,10 @@ export const updateAgencyProfile = async (req: Request & { agencyId?: string }, 
             success: true,
             data: result.data,
         });
-    } catch (err: any) {
-        console.log("profile error:", err)
+    } catch (err) {
         res.status(500).json({
             status: "error",
-            message: err.message
+            message: err
         });
     }
 };

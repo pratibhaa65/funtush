@@ -181,7 +181,7 @@ export const getAgencyDashboardService = async (agencyId: string) => {
 
 export const acceptBookingService = async (
   agencyId: string,
-  bookingId: string
+  // bookingId: string
 ) => {
   const agency = await db.agency.findUnique({
     where: { id: agencyId },
@@ -194,6 +194,7 @@ export const acceptBookingService = async (
     throw new Error("Agency is locked and cannot accept bookings");
   }
 
+  //need to create "bookings" table
   // const booking = await db.booking.updateMany({
   //   where: {
   //     id: bookingId,
@@ -215,7 +216,7 @@ export const acceptBookingService = async (
 
 export const publishPackageService = async (
   agencyId: string,
-  packageId: string
+  // packageId: string
 ) => {
   const agency = await db.agency.findUnique({
     where: { id: agencyId },
@@ -228,7 +229,8 @@ export const publishPackageService = async (
     throw new Error("Agency is locked and cannot publish packages");
   }
 
-  // const pkg = await db.package.updateMany({
+  //Need to create "packages" table
+  // const pkg = await db.agency.updateMany({
   //   where: {
   //     id: packageId,
   //     agency_id: agencyId,
@@ -289,10 +291,10 @@ export const updateAgencyProfileService = async (
   data: AgencyInfo,
   agencyId: string
 ) => {
-  const updateData: any = {};
+  const updateData: Record<string, unknown> = {};
 
   // helper to safely store JSON in Prisma
-  const toJson = (value: any) => JSON.parse(JSON.stringify(value));
+  const toJson = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
   let maps_url: string | undefined;
 
@@ -334,9 +336,9 @@ export const updateAgencyProfileService = async (
 
 
   // Add maps URL if address exists
-  // if (maps_url) {
-  //   updateData.mapsUrl = maps_url;
-  // }
+  if (maps_url) {
+    updateData.mapsUrl = maps_url;
+  }
 
   if (Object.keys(updateData).length === 0) {
     return {
@@ -414,7 +416,7 @@ interface KYCDetails {
 }
 export const AgencyKYCService = async (agencyId: string, kycDetails: KYCDetails) => {
 
-  let kyc = await db.kycSubmission.upsert({
+  const kyc = await db.kycSubmission.upsert({
     where: { agencyId },
     update: {
       status: "SUBMITTED",
