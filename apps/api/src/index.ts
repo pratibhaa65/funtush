@@ -2,7 +2,7 @@ import express, { type Request, type Response, type NextFunction } from "express
 import { MulterError } from "multer";
 import { db, redis } from "@funtush/database";
 import uploadRoutes from "./routes/upload.routes";
-
+import packageRoutes from "./routes/package.routes"
 import agencyRoutes from './routes/agency.routes';
 import adminRoutes from './routes/admin.routes';
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job";
@@ -15,7 +15,7 @@ app.use(express.json());
 app.use("/", uploadRoutes);
 app.use('/', agencyRoutes);
 app.use('/', adminRoutes);
-
+app.use('/', packageRoutes);
 
 // Liveness probe consumed by Prometheus / the load balancer.
 app.get("/health", async (_req: Request, res: Response) => {
