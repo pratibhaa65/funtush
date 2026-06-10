@@ -3,23 +3,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Mock Prisma ───────────────────────────────────────────────────────────────
 const mockPrisma = {
   kYCSubmission: {
-    findMany:  vi.fn(),
+    findMany:   vi.fn(),
     findUnique: vi.fn(),
-    update:    vi.fn(),
+    update:     vi.fn(),
   },
-  agency: { update: vi.fn() },
+  agency:       { update: vi.fn() },
   $transaction: vi.fn(),
 };
 
 vi.mock("../src/packages/database/prisma", () => ({ prisma: mockPrisma }));
 
 // ── Mock emailQueue ───────────────────────────────────────────────────────────
-const queueEmailMock = vi.fn().mockResolvedValue("email_id_123");
+const queueEmailMock    = vi.fn().mockResolvedValue("email_id_123");
 const getEmailQueueMock = vi.fn().mockResolvedValue([]);
 
 vi.mock("../src/lib/emailQueue", () => ({
-  queueEmail:    (...args: any[]) => queueEmailMock(...args),
-  getEmailQueue: (...args: any[]) => getEmailQueueMock(...args),
+  queueEmail:    (...args: unknown[]) => queueEmailMock(...args),
+  getEmailQueue: (...args: unknown[]) => getEmailQueueMock(...args),
 }));
 
 import {
@@ -31,23 +31,23 @@ import {
 } from "../src/services/kyc.service";
 
 const PENDING_SUBMISSION = {
-  id:        "kyc_001",
-  agencyId:  "agency_xyz",
-  status:    "PENDING",
+  id:          "kyc_001",
+  agencyId:    "agency_xyz",
+  status:      "PENDING",
   submittedAt: new Date("2024-01-15"),
-  agency:    { id: "agency_xyz", name: "XYZ Adventures", email: "admin@xyz.com" },
+  agency:      { id: "agency_xyz", name: "XYZ Adventures", email: "admin@xyz.com" },
 };
 
 describe("KYC service", () => {
 
   beforeEach(() => vi.clearAllMocks());
 
-  // ── DAY 4: KYC Queue ──────────────────────────────────────────────────────
+  // ── KYC Queue ─────────────────────────────────────────────────────────────
 
   it("getKycQueue returns PENDING submissions sorted by submittedAt asc", async () => {
     mockPrisma.kYCSubmission.findMany.mockResolvedValue([PENDING_SUBMISSION]);
     const result = await getKycQueue();
-    const call = mockPrisma.kYCSubmission.findMany.mock.calls[0][0];
+    const call   = mockPrisma.kYCSubmission.findMany.mock.calls[0][0];
     expect(call.where.status).toBe("PENDING");
     expect(call.orderBy.submittedAt).toBe("asc");
     expect(result).toHaveLength(1);
@@ -75,8 +75,6 @@ describe("KYC service", () => {
     const result = await approveKycSubmission("kyc_001");
 
     expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
-    const [kycUpdate, agencyUpdate] = mockPrisma.$transaction.mock.calls[0][0];
-    // Verify status set to APPROVED
     expect(result.status).toBe("APPROVED");
   });
 
@@ -87,7 +85,6 @@ describe("KYC service", () => {
       {},
     ]);
     await approveKycSubmission("kyc_001");
-    // Allow fire-and-forget to settle
     await new Promise((r) => setTimeout(r, 10));
     expect(queueEmailMock).toHaveBeenCalledWith(
       "admin@xyz.com",

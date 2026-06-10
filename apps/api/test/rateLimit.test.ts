@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ── Mock Redis
+// 
 const store: Record<string, number> = {};
 const ttlStore: Record<string, number> = {};
 
@@ -15,13 +15,29 @@ vi.mock("../src/lib/redis", () => ({
 import { checkRateLimit, SOS_PATHS, RATE_LIMITS } from "../src/services/rateLimit.service";
 import { rateLimitMiddleware } from "../src/middleware/rateLimit.middleware";
 
+interface MockRes {
+  _status: number;
+  _headers: Record<string, unknown>;
+  _body: unknown;
+  setHeader(k: string, v: unknown): void;
+  status(c: number): MockRes;
+  json(b: unknown): MockRes;
+}
+
 function mockReqRes(method: string, path: string, ip = "1.2.3.4") {
-  const req: any  = { method, path, headers: { "x-forwarded-for": ip }, socket: { remoteAddress: ip } };
-  const res: any  = {
-    _status: 200, _headers: {} as Record<string,any>, _body: null,
-    setHeader(k: string, v: any) { this._headers[k] = v; },
-    status(c: number) { this._status = c; return this; },
-    json(b: any) { this._body = b; return this; },
+  const req = {
+    method,
+    path,
+    headers: { "x-forwarded-for": ip },
+    socket:  { remoteAddress: ip },
+  };
+  const res: MockRes = {
+    _status:  200,
+    _headers: {},
+    _body:    null,
+    setHeader(k: string, v: unknown) { this._headers[k] = v; },
+    status(c: number)  { this._status = c; return this; },
+    json(b: unknown)   { this._body   = b; return this; },
   };
   const next = vi.fn();
   return { req, res, next };
@@ -35,7 +51,7 @@ describe("Rate limiting", () => {
     vi.clearAllMocks();
   });
 
-  // ─rate Limiting
+  // ── Rate Limiting ──────────────────────────────────────────────────────────
 
   it("RATE_LIMITS config: agency/login = 5/min", () => {
     expect(RATE_LIMITS["POST:/auth/agency/login"].maxRequests).toBe(5);
@@ -70,18 +86,18 @@ describe("Rate limiting", () => {
   it("middleware returns 429 on 6th login attempt", async () => {
     for (let i = 1; i <= 5; i++) {
       const { req, res, next } = mockReqRes("POST", "/auth/agency/login", "10.0.0.3");
-      await rateLimitMiddleware(req, res, next);
+      await rateLimitMiddleware(req as never, res as never, next);
     }
     const { req, res, next } = mockReqRes("POST", "/auth/agency/login", "10.0.0.3");
-    await rateLimitMiddleware(req, res, next);
+    await rateLimitMiddleware(req as never, res as never, next);
     expect(res._status).toBe(429);
-    expect(res._body?.error).toBe("Too Many Requests");
+    expect((res._body as Record<string, string>)?.error).toBe("Too Many Requests");
     expect(next).not.toHaveBeenCalled();
   });
 
   it("rate limit headers present on allowed request", async () => {
     const { req, res, next } = mockReqRes("GET", "/api/something", "10.0.0.4");
-    await rateLimitMiddleware(req, res, next);
+    await rateLimitMiddleware(req as never, res as never, next);
     expect(res._headers["X-RateLimit-Limit"]).toBeDefined();
     expect(res._headers["X-RateLimit-Remaining"]).toBeDefined();
     expect(res._headers["X-RateLimit-Reset"]).toBeDefined();
@@ -102,7 +118,7 @@ describe("Rate limiting", () => {
     expect(resultB.allowed).toBe(true);
   });
 
-  // ── SOS exempt 
+  // ── SOS exempt ────────────────────────────────────────────────────────────
 
   it("SOS_PATHS contains /sos, /api/sos, /emergency", () => {
     expect(SOS_PATHS).toContain("/sos");
@@ -131,14 +147,14 @@ describe("Rate limiting", () => {
   it("middleware skips Redis entirely for SOS paths", async () => {
     const { redis } = await import("../src/lib/redis");
     const { req, res, next } = mockReqRes("POST", "/sos", "10.0.0.9");
-    await rateLimitMiddleware(req, res, next);
+    await rateLimitMiddleware(req as never, res as never, next);
     expect(redis.incr).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("Redis down → fail open, request allowed", async () => {
     const { redis } = await import("../src/lib/redis");
-    (redis.incr as any).mockRejectedValueOnce(new Error("ECONNREFUSED"));
+    vi.mocked(redis.incr).mockRejectedValueOnce(new Error("ECONNREFUSED"));
     const result = await checkRateLimit("10.0.0.10", "GET", "/api/data");
     expect(result.allowed).toBe(true);
   });
