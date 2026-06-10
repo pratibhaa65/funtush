@@ -6,8 +6,6 @@ import authRoutes from "./routes/auth.routes.js";
 import agencyRoutes from "./routes/agency.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";
-import dotenv from "dotenv";
-
 
 const app = express();
 // app.use(express.json())

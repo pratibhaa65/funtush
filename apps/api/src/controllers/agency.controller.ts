@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import {  acceptBookingService, AgencyKYCService, agencySubscription, createAgency, getAgencyDashboardService, getSubscriptionTiers, KYCStatusService, publishPackageService, updateAgencyDomainService, updateAgencyProfileService } from "../services/agency.service.js";
 import { uploadFile } from "@funtush/storage";
-import type { AgencyRequest, UpdateDomainBody } from "../types/auth-request.js";
+import type { UpdateDomainBody } from "../types/auth-request.js";
 
 export const registerAcency = async (req: Request, res: Response) => {
     try {
