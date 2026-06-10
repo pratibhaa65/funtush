@@ -38,5 +38,6 @@
     "@types/nodemailer": "^8.0.0",
     "nodemon": "^3.1.14",
     "zod": "^4.4.3"
+    "vitest": "^2.1.9"
   }
 }

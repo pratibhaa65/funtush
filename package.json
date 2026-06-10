@@ -39,4 +39,20 @@
     "ioredis": "^5.11.1",
     "prisma": "^6.7.0"
   }
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumittiruwa/funtush.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sumittiruwa/funtush/issues"
+  },
+  "homepage": "https://github.com/sumittiruwa/funtush#readme"
 }
