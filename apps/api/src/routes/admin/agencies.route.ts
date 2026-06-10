@@ -50,7 +50,7 @@ router.patch("/:id/status", async (req, res) => {
     const { status, reason } = req.body as { status?: string; reason?: string };
 
     const validStatuses = ["ACTIVE", "SUSPENDED", "LOCKED"] as const;
-    if (!status || !validStatuses.includes(status as any)) {
+    if (!status || !(validStatuses as readonly string[]).includes(status)) {
       res.status(400).json({
         error: `status must be one of: ${validStatuses.join(", ")}`,
       });
