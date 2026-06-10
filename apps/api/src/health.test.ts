@@ -12,7 +12,9 @@ const { mockDbQuery, mockRedisPing } = vi.hoisted(() => ({
 }));
 
 vi.mock("@funtush/database", () => ({
-  db:    { $queryRaw: mockDbQuery },
+  db: {
+    $queryRaw: (...args: unknown[]) => mockDbQuery(...args),
+  },
   redis: { ping: mockRedisPing },
 }));
 
@@ -53,7 +55,7 @@ let server: Server;
 let baseUrl: string;
 
 beforeAll(async () => {
-  const { default: app } = await import("./app");
+  const { default: app } = await import("./app.js");
 
   await new Promise<void>((resolve) => {
     server = app.listen(0, () => {
@@ -72,6 +74,7 @@ afterAll(() => {
 describe("GET /health", () => {
   it("returns 200 ok", async () => {
     const res = await fetch(`${baseUrl}/health`);
+    const body = await res.json();
     expect(res.status).toBe(200);
     expect(body).toEqual({
       status: "ok",

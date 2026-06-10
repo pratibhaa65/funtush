@@ -132,7 +132,7 @@ importers:
         version: 3.1.14
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@types/node@25.9.1)
+        version: 2.1.9(@types/node@25.9.2)
 
   apps/mobile:
     dependencies:
