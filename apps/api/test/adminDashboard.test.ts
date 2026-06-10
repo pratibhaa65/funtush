@@ -1,27 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ── Mock Prisma
-const mockPrisma = {
-  agency:       { groupBy: vi.fn(), findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
-  subscription: { count: vi.fn() },
-  invoice:      { aggregate: vi.fn() },
-  trek:         { count: vi.fn() },
-  booking:      { aggregate: vi.fn() },
-  breakGlassToken: { create: vi.fn() },
-};
+// ── Mock Prisma ───────────────────────────────────────────────────────────────
+vi.mock("../src/packages/database/prisma", () => ({
+  prisma: {
+    agency:          { groupBy: vi.fn(), findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    subscription:    { count: vi.fn() },
+    invoice:         { aggregate: vi.fn() },
+    trek:            { count: vi.fn() },
+    booking:         { aggregate: vi.fn() },
+    breakGlassToken: { create: vi.fn() },
+  },
+}));
 
-vi.mock("../src/packages/database/prisma", () => ({ prisma: mockPrisma }));
-
-// ── Mock Redis cache
-let cacheStore: Record<string, any> = {};
+// ── Mock Redis cache ──────────────────────────────────────────────────────────
+let cacheStore: Record<string, unknown> = {};
 vi.mock("../src/services/redis.service", () => ({
   cacheGet: vi.fn(async (k: string) => cacheStore[k] ?? null),
-  cacheSet: vi.fn(async (k: string, v: any) => { cacheStore[k] = v; }),
+  cacheSet: vi.fn(async (k: string, v: unknown) => { cacheStore[k] = v; }),
   cacheDel: vi.fn(),
   TENANT_TTL: 300,
 }));
 
 import { getDashboardStats, issueBreakGlassToken } from "../src/services/admin.service";
+import { prisma } from "../src/packages/database/prisma";
 
 describe("Admin dashboard", () => {
 
@@ -30,18 +31,16 @@ describe("Admin dashboard", () => {
     vi.clearAllMocks();
   });
 
-  // dashboard state
-
   it("returns correct shape with all expected fields", async () => {
-    mockPrisma.agency.groupBy.mockResolvedValue([
+    vi.mocked(prisma.agency.groupBy).mockResolvedValue([
       { tier: "BASIC", _count: { _all: 10 } },
       { tier: "PRO",   _count: { _all: 5  } },
-    ]);
-    mockPrisma.subscription.count.mockResolvedValue(15);
-    mockPrisma.invoice.aggregate.mockResolvedValue({ _sum: { amount: 48320.50 } });
-    mockPrisma.trek.count.mockResolvedValue(34);
+    ] as never);
+    vi.mocked(prisma.subscription.count).mockResolvedValue(15);
+    vi.mocked(prisma.invoice.aggregate).mockResolvedValue({ _sum: { amount: 48320.50 } } as never);
+    vi.mocked(prisma.trek.count).mockResolvedValue(34);
 
-    const stats: any = await getDashboardStats();
+    const stats = await getDashboardStats() as Record<string, unknown>;
 
     expect(stats.agenciesByTier).toEqual({ BASIC: 10, PRO: 5 });
     expect(stats.totalActiveSubscriptions).toBe(15);
@@ -51,49 +50,50 @@ describe("Admin dashboard", () => {
   });
 
   it("revenueThisMonth defaults to 0 when _sum.amount is null", async () => {
-    mockPrisma.agency.groupBy.mockResolvedValue([]);
-    mockPrisma.subscription.count.mockResolvedValue(0);
-    mockPrisma.invoice.aggregate.mockResolvedValue({ _sum: { amount: null } });
-    mockPrisma.trek.count.mockResolvedValue(0);
+    vi.mocked(prisma.agency.groupBy).mockResolvedValue([] as never);
+    vi.mocked(prisma.subscription.count).mockResolvedValue(0);
+    vi.mocked(prisma.invoice.aggregate).mockResolvedValue({ _sum: { amount: null } } as never);
+    vi.mocked(prisma.trek.count).mockResolvedValue(0);
 
-    const stats: any = await getDashboardStats();
+    const stats = await getDashboardStats() as Record<string, unknown>;
     expect(stats.revenueThisMonth).toBe(0);
   });
 
   it("caches result — Prisma called only once on second request", async () => {
-    mockPrisma.agency.groupBy.mockResolvedValue([]);
-    mockPrisma.subscription.count.mockResolvedValue(0);
-    mockPrisma.invoice.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
-    mockPrisma.trek.count.mockResolvedValue(0);
+    vi.mocked(prisma.agency.groupBy).mockResolvedValue([] as never);
+    vi.mocked(prisma.subscription.count).mockResolvedValue(0);
+    vi.mocked(prisma.invoice.aggregate).mockResolvedValue({ _sum: { amount: 0 } } as never);
+    vi.mocked(prisma.trek.count).mockResolvedValue(0);
 
-    await getDashboardStats(); // miss → DB
-    await getDashboardStats(); // hit  → cache
+    await getDashboardStats();
+    await getDashboardStats();
 
-    expect(mockPrisma.agency.groupBy).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.subscription.count).toHaveBeenCalledTimes(1);
+    expect(prisma.agency.groupBy).toHaveBeenCalledTimes(1);
+    expect(prisma.subscription.count).toHaveBeenCalledTimes(1);
   });
 
   it("invoice query filters by PAID status and start of current month", async () => {
-    mockPrisma.agency.groupBy.mockResolvedValue([]);
-    mockPrisma.subscription.count.mockResolvedValue(0);
-    mockPrisma.invoice.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
-    mockPrisma.trek.count.mockResolvedValue(0);
+    vi.mocked(prisma.agency.groupBy).mockResolvedValue([] as never);
+    vi.mocked(prisma.subscription.count).mockResolvedValue(0);
+    vi.mocked(prisma.invoice.aggregate).mockResolvedValue({ _sum: { amount: 0 } } as never);
+    vi.mocked(prisma.trek.count).mockResolvedValue(0);
 
     await getDashboardStats();
 
-    const invoiceCall = mockPrisma.invoice.aggregate.mock.calls[0][0];
-    expect(invoiceCall.where.status).toBe("PAID");
-    expect(invoiceCall.where.paidAt.gte).toBeInstanceOf(Date);
+    const invoiceCall = vi.mocked(prisma.invoice.aggregate).mock.calls[0][0] as Record<string, unknown>;
+    const where = invoiceCall.where as Record<string, unknown>;
+    expect(where.status).toBe("PAID");
+    expect((where.paidAt as Record<string, unknown>).gte).toBeInstanceOf(Date);
   });
 
   it("trek query filters by LIVE status", async () => {
-    mockPrisma.agency.groupBy.mockResolvedValue([]);
-    mockPrisma.subscription.count.mockResolvedValue(0);
-    mockPrisma.invoice.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
-    mockPrisma.trek.count.mockResolvedValue(0);
+    vi.mocked(prisma.agency.groupBy).mockResolvedValue([] as never);
+    vi.mocked(prisma.subscription.count).mockResolvedValue(0);
+    vi.mocked(prisma.invoice.aggregate).mockResolvedValue({ _sum: { amount: 0 } } as never);
+    vi.mocked(prisma.trek.count).mockResolvedValue(0);
 
     await getDashboardStats();
-    expect(mockPrisma.trek.count.mock.calls[0][0]).toEqual({ where: { status: "LIVE" } });
+    expect(vi.mocked(prisma.trek.count).mock.calls[0][0]).toEqual({ where: { status: "LIVE" } });
   });
 });
 
@@ -104,39 +104,34 @@ describe("Break-glass token", () => {
     vi.clearAllMocks();
   });
 
-  // break-glass
-
   it("issues a 64-char hex token", async () => {
-    const recordId = "bg_record_123";
-    mockPrisma.breakGlassToken.create.mockResolvedValue({ id: recordId });
-    mockPrisma.agency.findUnique.mockResolvedValue({ email: "a@b.com", name: "Test Agency" });
+    vi.mocked(prisma.breakGlassToken.create).mockResolvedValue({ id: "bg_record_123" } as never);
+    vi.mocked(prisma.agency.findUnique).mockResolvedValue({ email: "a@b.com", name: "Test Agency" } as never);
 
-    const result: any = await issueBreakGlassToken("agency_xyz", "127.0.0.1");
-
-    expect(result.token).toMatch(/^[0-9a-f]{64}$/);
-    expect(result.recordId).toBe(recordId);
+    const result = await issueBreakGlassToken("agency_xyz", "127.0.0.1") as Record<string, unknown>;
+    expect(result.token as string).toMatch(/^[0-9a-f]{64}$/);
+    expect(result.recordId).toBe("bg_record_123");
   });
 
   it("expiresAt is approximately 30 minutes from now", async () => {
-    mockPrisma.breakGlassToken.create.mockResolvedValue({ id: "bg_1" });
-    mockPrisma.agency.findUnique.mockResolvedValue({ email: "a@b.com", name: "Test" });
+    vi.mocked(prisma.breakGlassToken.create).mockResolvedValue({ id: "bg_1" } as never);
+    vi.mocked(prisma.agency.findUnique).mockResolvedValue({ email: "a@b.com", name: "Test" } as never);
 
     const before = Date.now();
-    const result: any = await issueBreakGlassToken("agency_xyz", "127.0.0.1");
+    const result = await issueBreakGlassToken("agency_xyz", "127.0.0.1") as Record<string, unknown>;
     const after  = Date.now();
 
-    const expiresMs = new Date(result.expiresAt).getTime();
+    const expiresMs = new Date(result.expiresAt as string).getTime();
     expect(expiresMs).toBeGreaterThanOrEqual(before + 30 * 60 * 1000 - 100);
     expect(expiresMs).toBeLessThanOrEqual(after  + 30 * 60 * 1000 + 100);
   });
 
   it("stores token in Redis with 1800s TTL", async () => {
     const { cacheSet } = await import("../src/services/redis.service");
-    mockPrisma.breakGlassToken.create.mockResolvedValue({ id: "bg_2" });
-    mockPrisma.agency.findUnique.mockResolvedValue({ email: "a@b.com", name: "Test" });
+    vi.mocked(prisma.breakGlassToken.create).mockResolvedValue({ id: "bg_2" } as never);
+    vi.mocked(prisma.agency.findUnique).mockResolvedValue({ email: "a@b.com", name: "Test" } as never);
 
-    const result: any = await issueBreakGlassToken("agency_xyz", "10.0.0.1");
-
+    const result = await issueBreakGlassToken("agency_xyz", "10.0.0.1") as Record<string, unknown>;
     expect(cacheSet).toHaveBeenCalledWith(
       `break-glass:${result.token}`,
       { agencyId: "agency_xyz", issuedByIp: "10.0.0.1" },
@@ -145,15 +140,16 @@ describe("Break-glass token", () => {
   });
 
   it("BreakGlassToken.create called with correct shape", async () => {
-    mockPrisma.breakGlassToken.create.mockResolvedValue({ id: "bg_3" });
-    mockPrisma.agency.findUnique.mockResolvedValue({ email: "a@b.com", name: "Test" });
+    vi.mocked(prisma.breakGlassToken.create).mockResolvedValue({ id: "bg_3" } as never);
+    vi.mocked(prisma.agency.findUnique).mockResolvedValue({ email: "a@b.com", name: "Test" } as never);
 
     await issueBreakGlassToken("agency_abc", "192.168.1.1");
 
-    const createArg = mockPrisma.breakGlassToken.create.mock.calls[0][0];
-    expect(createArg.data.agencyId).toBe("agency_abc");
-    expect(createArg.data.issuedByIp).toBe("192.168.1.1");
-    expect(createArg.data.token).toMatch(/^[0-9a-f]{64}$/);
-    expect(createArg.data.expiresAt).toBeInstanceOf(Date);
+    const createArg = vi.mocked(prisma.breakGlassToken.create).mock.calls[0][0] as Record<string, unknown>;
+    const data = createArg.data as Record<string, unknown>;
+    expect(data.agencyId).toBe("agency_abc");
+    expect(data.issuedByIp).toBe("192.168.1.1");
+    expect(data.token as string).toMatch(/^[0-9a-f]{64}$/);
+    expect(data.expiresAt).toBeInstanceOf(Date);
   });
 });

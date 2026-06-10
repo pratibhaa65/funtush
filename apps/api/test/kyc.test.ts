@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ── Mock Prisma ───────────────────────────────────────────────────────────────
-const mockPrisma = {
-  kYCSubmission: {
-    findMany:   vi.fn(),
-    findUnique: vi.fn(),
-    update:     vi.fn(),
+vi.mock("../src/packages/database/prisma", () => ({
+  prisma: {
+    kYCSubmission: {
+      findMany:   vi.fn(),
+      findUnique: vi.fn(),
+      update:     vi.fn(),
+    },
+    agency:       { update: vi.fn() },
+    $transaction: vi.fn(),
   },
-  agency:       { update: vi.fn() },
-  $transaction: vi.fn(),
-};
-
-vi.mock("../src/packages/database/prisma", () => ({ prisma: mockPrisma }));
+}));
 
 // ── Mock emailQueue ───────────────────────────────────────────────────────────
 const queueEmailMock    = vi.fn().mockResolvedValue("email_id_123");
@@ -29,6 +29,7 @@ import {
   rejectKycSubmission,
   listEmailQueue,
 } from "../src/services/kyc.service";
+import { prisma } from "../src/packages/database/prisma";
 
 const PENDING_SUBMISSION = {
   id:          "kyc_001",
@@ -42,48 +43,45 @@ describe("KYC service", () => {
 
   beforeEach(() => vi.clearAllMocks());
 
-  // ── KYC Queue ─────────────────────────────────────────────────────────────
-
   it("getKycQueue returns PENDING submissions sorted by submittedAt asc", async () => {
-    mockPrisma.kYCSubmission.findMany.mockResolvedValue([PENDING_SUBMISSION]);
+    vi.mocked(prisma.kYCSubmission.findMany).mockResolvedValue([PENDING_SUBMISSION] as never);
     const result = await getKycQueue();
-    const call   = mockPrisma.kYCSubmission.findMany.mock.calls[0][0];
-    expect(call.where.status).toBe("PENDING");
-    expect(call.orderBy.submittedAt).toBe("asc");
+    const call   = vi.mocked(prisma.kYCSubmission.findMany).mock.calls[0][0] as Record<string, unknown>;
+    expect((call.where as Record<string, unknown>).status).toBe("PENDING");
+    expect((call.orderBy as Record<string, unknown>).submittedAt).toBe("asc");
     expect(result).toHaveLength(1);
   });
 
   it("getKycSubmission includes agency and documents", async () => {
     const full = { ...PENDING_SUBMISSION, documents: [{ url: "https://docs.example.com/kyc.pdf" }] };
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(full);
-    const result = await getKycSubmission("kyc_001");
-    expect(mockPrisma.kYCSubmission.findUnique.mock.calls[0][0].include.documents).toBe(true);
-    expect(result?.documents).toHaveLength(1);
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(full as never);
+    const result = await getKycSubmission("kyc_001") as Record<string, unknown>;
+    const call = vi.mocked(prisma.kYCSubmission.findUnique).mock.calls[0][0] as Record<string, unknown>;
+    expect((call.include as Record<string, unknown>).documents).toBe(true);
+    expect((result.documents as unknown[]).length).toBe(1);
   });
 
   it("getKycSubmission returns null for unknown id", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(null);
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(null);
     const result = await getKycSubmission("kyc_unknown");
     expect(result).toBeNull();
   });
 
   it("approveKycSubmission sets status APPROVED and awards badge", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(PENDING_SUBMISSION);
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(PENDING_SUBMISSION as never);
     const updated = { id: "kyc_001", status: "APPROVED", reviewedAt: new Date(), agencyId: "agency_xyz" };
-    mockPrisma.$transaction.mockResolvedValue([updated, {}]);
-
-    const result = await approveKycSubmission("kyc_001");
-
-    expect(mockPrisma.$transaction).toHaveBeenCalledOnce();
+    vi.mocked(prisma.$transaction).mockResolvedValue([updated, {}] as never);
+    const result = await approveKycSubmission("kyc_001") as Record<string, unknown>;
+    expect(prisma.$transaction).toHaveBeenCalledOnce();
     expect(result.status).toBe("APPROVED");
   });
 
   it("approveKycSubmission queues approval email", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(PENDING_SUBMISSION);
-    mockPrisma.$transaction.mockResolvedValue([
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(PENDING_SUBMISSION as never);
+    vi.mocked(prisma.$transaction).mockResolvedValue([
       { id: "kyc_001", status: "APPROVED", reviewedAt: new Date(), agencyId: "agency_xyz" },
       {},
-    ]);
+    ] as never);
     await approveKycSubmission("kyc_001");
     await new Promise((r) => setTimeout(r, 10));
     expect(queueEmailMock).toHaveBeenCalledWith(
@@ -94,30 +92,30 @@ describe("KYC service", () => {
   });
 
   it("approveKycSubmission throws if submission not found", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(null);
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(null);
     await expect(approveKycSubmission("kyc_missing")).rejects.toThrow("not found");
   });
 
   it("approveKycSubmission throws if already reviewed", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue({ ...PENDING_SUBMISSION, status: "APPROVED" });
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue({ ...PENDING_SUBMISSION, status: "APPROVED" } as never);
     await expect(approveKycSubmission("kyc_001")).rejects.toThrow("already");
   });
 
   it("rejectKycSubmission sets status REJECTED with reason", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(PENDING_SUBMISSION);
-    mockPrisma.kYCSubmission.update.mockResolvedValue({
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(PENDING_SUBMISSION as never);
+    vi.mocked(prisma.kYCSubmission.update).mockResolvedValue({
       id: "kyc_001", status: "REJECTED", rejectionReason: "Documents blurry", reviewedAt: new Date(), agencyId: "agency_xyz",
-    });
-    const result = await rejectKycSubmission("kyc_001", "Documents blurry");
+    } as never);
+    const result = await rejectKycSubmission("kyc_001", "Documents blurry") as Record<string, unknown>;
     expect(result.status).toBe("REJECTED");
     expect(result.rejectionReason).toBe("Documents blurry");
   });
 
   it("rejectKycSubmission queues rejection email with reason", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(PENDING_SUBMISSION);
-    mockPrisma.kYCSubmission.update.mockResolvedValue({
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(PENDING_SUBMISSION as never);
+    vi.mocked(prisma.kYCSubmission.update).mockResolvedValue({
       id: "kyc_001", status: "REJECTED", rejectionReason: "Expired ID", reviewedAt: new Date(), agencyId: "agency_xyz",
-    });
+    } as never);
     await rejectKycSubmission("kyc_001", "Expired ID");
     await new Promise((r) => setTimeout(r, 10));
     expect(queueEmailMock).toHaveBeenCalledWith(
@@ -128,11 +126,9 @@ describe("KYC service", () => {
   });
 
   it("rejectKycSubmission throws if submission not found", async () => {
-    mockPrisma.kYCSubmission.findUnique.mockResolvedValue(null);
+    vi.mocked(prisma.kYCSubmission.findUnique).mockResolvedValue(null);
     await expect(rejectKycSubmission("kyc_missing", "reason")).rejects.toThrow("not found");
   });
-
-  // ── Email Queue ────────────────────────────────────────────────────────────
 
   it("listEmailQueue queries all statuses by default", async () => {
     await listEmailQueue();
