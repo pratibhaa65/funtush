@@ -7,8 +7,8 @@ vi.stubEnv("DATABASE_URL", "postgresql://localhost:5432/funtush_test");
 
 
 const { mockDbQuery, mockRedisPing } = vi.hoisted(() => ({
-  mockDbQuery:   vi.fn(),
-  mockRedisPing: vi.fn(),
+  mockDbQuery:   vi.fn().mockResolvedValue([{ "?column?": 1 }]),
+  mockRedisPing: vi.fn().mockResolvedValue("PONG"),
 }));
 
 vi.mock("@funtush/database", () => ({

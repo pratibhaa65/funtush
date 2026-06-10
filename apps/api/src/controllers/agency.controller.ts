@@ -3,12 +3,12 @@ import {  acceptBookingService, AgencyKYCService, agencySubscription, createAgen
 import { uploadFile } from "@funtush/storage";
 import type { UpdateDomainBody } from "../types/auth-request.js";
 
-export const registerAcency = async (req: Request, res: Response) => {
+export const registerAgency = async (req: Request, res: Response) => {
     try {
         const newAgency = await createAgency(req.body);
         res.status(201).json({
             status: "success",
-            data: newAgency
+            data: newAgency,
         });
     } catch (err) {
         res.status(500).json({
