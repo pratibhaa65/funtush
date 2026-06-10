@@ -41,6 +41,27 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum KycStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum KycDocumentType {
+  BUSINESS_REGISTRATION
+  PAN_CERTIFICATE
+  TOURISM_LICENSE
+  BANK_DETAILS
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
 model SubscriptionTier {
   id           String  @id @default(uuid())
   name         String  @unique
@@ -49,26 +70,38 @@ model SubscriptionTier {
   monthlyPrice Decimal @map("monthly_price") @db.Decimal(10, 2)
   features     Json
 
-  agencies Agency[]
+  agencies      Agency[]       @relation("TierAgencies")
+  subscriptions Subscription[]
 
   @@map("subscription_tiers")
 }
 
 model Agency {
-  id             String       @id @default(uuid())
-  name           String
-  email          String       @unique
-  slug           String       @unique
-  status         AgencyStatus @default(TRIAL)
-  tier           String
-  trialExpiresAt DateTime?    @map("trial_expires_at")
-  createdAt      DateTime     @default(now()) @map("created_at")
+  id String @id @default(uuid())
 
-  subscription SubscriptionTier @relation(fields: [tier], references: [name])
-  users        User[]
+  name  String
+  email String @unique
+  slug  String @unique
+
+  status AgencyStatus @default(TRIAL)
+
+  currentTierId String?           @map("current_tier_id")
+  currentTier   SubscriptionTier? @relation("TierAgencies", fields: [currentTierId], references: [id])
+
+  subscriptions Subscription[]
 
   packages TrekPackage[]
   bookings Booking[]
+
+  customDomain   String?   @map("custom_domain")
+  mapsUrl        String?   @map("maps_url")
+  trialExpiresAt DateTime? @map("trial_expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users   User[]
+  profile AgencyProfile?
+  kyc     KycSubmission?
 
   @@map("agencies")
 }
@@ -288,4 +321,82 @@ model PaymentLink {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("payment_links")
+}
+
+model AgencyProfile {
+  id String @id @default(uuid())
+
+  agencyId String @unique @map("agency_id")
+
+  logo        String?
+  description String?
+  address     String?
+
+  phone   Json?
+  email   Json?
+  regions Json?
+
+  logoShowOnWebsite        Boolean @default(true)
+  descriptionShowOnWebsite Boolean @default(true)
+  phoneShowOnWebsite       Boolean @default(true)
+  emailShowOnWebsite       Boolean @default(true)
+  regionsShowOnWebsite     Boolean @default(true)
+  addressShowOnWebsite     Boolean @default(true)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@map("agency_profiles")
+}
+
+model KycSubmission {
+  id              String    @id @default(uuid())
+  agencyId        String    @unique @map("agency_id")
+  status          KycStatus @default(SUBMITTED)
+  rejectionReason String?   @map("rejection_reason")
+
+  submittedAt DateTime  @default(now()) @map("submitted_at")
+  reviewedAt  DateTime? @map("reviewed_at")
+  reviewedBy  String?   @map("reviewed_by")
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  documents KycDocument[]
+
+  @@map("kyc_submissions")
+}
+
+model KycDocument {
+  id String @id @default(uuid())
+
+  kycId   String          @map("kyc_id")
+  type    KycDocumentType
+  fileUrl String          @map("file_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  kyc KycSubmission @relation(fields: [kycId], references: [id], onDelete: Cascade)
+
+  @@map("kyc_documents")
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  agencyId String @map("agency_id")
+  tierId   String @map("tier_id")
+
+  agency Agency           @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tier   SubscriptionTier @relation(fields: [tierId], references: [id])
+
+  status SubscriptionStatus @default(ACTIVE)
+
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("subscriptions")
 }

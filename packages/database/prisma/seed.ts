@@ -117,3 +117,6 @@ main()
     await prisma.$disconnect();
     process.exit(1);
   });
+
+
+  // Seeded Super Admin: admin@funtush.com (password: ChangeMe123!)

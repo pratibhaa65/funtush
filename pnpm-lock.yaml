@@ -78,9 +78,18 @@ importers:
       '@funtush/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+<<<<<<< HEAD
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+=======
+      '@prisma/client':
+        specifier: ^7.8.0
+        version: 7.8.0(prisma@7.8.0(@types/react@19.2.16)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3))(typescript@6.0.3)
+      bcrypt:
+        specifier: ^6.0.0
+        version: 6.0.0
+>>>>>>> upstream/develop
       express:
         specifier: ^4.22.2
         version: 4.22.2
@@ -100,6 +109,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@types/bcrypt':
+        specifier: ^6.0.0
+        version: 6.0.0
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6

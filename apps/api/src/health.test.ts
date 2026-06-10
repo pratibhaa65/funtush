@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
+import type { Express } from "express";
 
 vi.stubEnv("REDIS_URL", "redis://127.0.0.1:6379");
 
@@ -11,17 +12,13 @@ const { mockDbQuery, mockRedisPing } = vi.hoisted(() => ({
 }));
 
 vi.mock("@funtush/database", () => ({
-  db: {
-    $queryRaw: mockDbQuery, // Prisma-style DB call
-  },
-  redis: {
-    ping: mockRedisPing,
-  },
-}) as unknown as typeof import("@funtush/database"));
+  db: { $queryRaw: mockDbQuery },
+  redis: { ping: mockRedisPing },
+}));
 
-type AppModule = typeof import("./index.js");
-
-let app: AppModule["app"];
+// const module = await import("./index.js");
+let app: Express;
+// let app: Awaited<ReturnType<typeof import("./index.js")>>["app"];
 let server: Server;
 let baseUrl: string;
 
@@ -45,7 +42,7 @@ afterAll(() => {
 
 describe("GET /health", () => {
   it("returns 200 ok when DB and Redis are reachable", async () => {
-    mockDbQuery.mockResolvedValueOnce([{ "?column?": 1 }]);
+    mockDbQuery.mockResolvedValueOnce([{ 1: 1 }]);
     mockRedisPing.mockResolvedValueOnce("PONG");
 
     const res = await fetch(`${baseUrl}/health`);
