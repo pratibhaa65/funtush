@@ -1,7 +1,7 @@
 
 import bcrypt from 'bcrypt';
 import { db } from "@funtush/database";
-import { validateRegistrationInput } from "../utils/validator";
+import { validateRegistrationInput } from "../utils/validator.js";
 
 
 interface CreateTrekkerInput {

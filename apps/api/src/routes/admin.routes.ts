@@ -1,5 +1,5 @@
 import express from "express";
-import { approveAgencyKYC, rejectAgencyKYC } from "../controllers/agency.adminController";
+import { approveAgencyKYC, rejectAgencyKYC } from "../controllers/agency.adminController.js";
 
 
 const router = express.Router();
