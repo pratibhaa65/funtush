@@ -57,7 +57,10 @@ export const createTrekker = async (data: CreateTrekkerInput) => {
             phone,
             country,
             emergencyContact: emergency_contact_phone,
+<<<<<<< HEAD
             emergencyContactName: emergency_contact_name,
+=======
+>>>>>>> ef4ad5e (fix: rebase conflicts)
         },
     });
 

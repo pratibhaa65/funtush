@@ -95,6 +95,7 @@ export const createAgency = async (data: CreateAgencyInput) => {
     },
   });
 
+
   // email after registration
   await sendWelcomeEmail(email, password, name);
 
