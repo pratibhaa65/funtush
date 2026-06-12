@@ -1,8 +1,9 @@
 import { prisma, redis } from "@funtush/database";
 import { generateOTP } from "@funtush/auth";
-import { sendOtpEmail } from "../utils/email";
+import { sendAlternativeDateEmail, sendBookingAcceptedEmail, sendBookingRejectedEmail, sendOtpEmail } from "../utils/email";
 import { sendInquiryConfirmationEmail, sendAgencyInquiryAlertEmail } from "../utils/email";
-import { notifyAgencyAdmins } from "./notification.service.js";
+import { notifyAgencyAdmins, notifyTrekker } from "./notification.service.js";
+const { randomBytes } = await import("crypto");
 
 //Types
 export interface InquiryInput {
@@ -223,3 +224,170 @@ export async function verifyInquiryOtp(sessionToken: string, otp: string) {
   };
 }
 
+// GET /agencies/me/bookings
+export async function getAgencyBookings(
+  agencyId: string,
+  status?: string,
+  page = 1,
+  limit = 20,
+) {
+  const where = {
+    agencyId,
+    ...(status ? { status: status as any } : {}),
+  };
+
+  const [bookings, total] = await Promise.all([
+    prisma.booking.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        package: { select: { title: true, slug: true } },
+        departureDate: { select: { startDate: true } },
+        addOns: { include: { addOn: true } },
+      },
+    }),
+    prisma.booking.count({ where }),
+  ]);
+
+  return { bookings, total, page, limit };
+}
+
+// PATCH /bookings/:id/accept
+export async function acceptBooking(bookingId: string, agencyId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { package: true },
+  });
+
+  if (!booking) throw new Error("Booking not found");
+  if (booking.agencyId !== agencyId) throw new Error("Unauthorized");
+  if (booking.status !== "INQUIRY") throw new Error("Booking is not in INQUIRY state");
+
+  const urlToken = randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+
+  const [updatedBooking] = await prisma.$transaction([
+    prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: "CONFIRMED" },
+    }),
+    prisma.paymentLink.create({
+      data: {
+        bookingId,
+        urlToken,
+        amount: booking.totalPrice,
+        expiresAt,
+      },
+    }),
+  ]);
+
+  const paymentUrl = `${process.env.APP_URL}/pay/${urlToken}`;
+
+  await sendBookingAcceptedEmail(
+    booking.trekkerEmail,
+    booking.trekkerName,
+    booking.package.title,
+    paymentUrl,
+    expiresAt,
+  );
+
+  if (booking.trekkerId) {
+    await notifyTrekker(booking.trekkerId, {
+      title: "Booking Confirmed!",
+      body: `Your booking for ${booking.package.title} has been confirmed. Please complete payment within 48 hours.`,
+      data: { bookingId, type: "BOOKING_CONFIRMED", link: `/bookings/${bookingId}` },
+    });
+  }
+
+  return { bookingId, status: "CONFIRMED", paymentUrl, expiresAt };
+}
+
+// PATCH /bookings/:id/reject
+export async function rejectBooking(
+  bookingId: string,
+  agencyId: string,
+  reason: string,
+) {
+  if (!reason?.trim()) throw new Error("Rejection reason is required");
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { package: true },
+  });
+
+  if (!booking) throw new Error("Booking not found");
+  if (booking.agencyId !== agencyId) throw new Error("Unauthorized");
+  if (!["INQUIRY", "CONFIRMED"].includes(booking.status)) {
+    throw new Error("Booking cannot be rejected in its current state");
+  }
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { status: "REJECTED", rejectionReason: reason },
+  });
+
+  await sendBookingRejectedEmail(
+    booking.trekkerEmail,
+    booking.trekkerName,
+    booking.package.title,
+    reason,
+  );
+
+  if (booking.trekkerId) {
+    await notifyTrekker(booking.trekkerId, {
+      title: "Booking Update",
+      body: `Your inquiry for ${booking.package.title} was not accepted.`,
+      data: { bookingId, type: "BOOKING_REJECTED", link: `/bookings/${bookingId}` },
+    });
+  }
+
+  return { bookingId, status: "REJECTED" };
+}
+
+// PATCH /bookings/:id/propose-date
+export async function proposeAlternativeDate(
+  bookingId: string,
+  agencyId: string,
+  proposedDate: string,
+) {
+  if (!proposedDate) throw new Error("Proposed date is required");
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { package: true },
+  });
+
+  if (!booking) throw new Error("Booking not found");
+  if (booking.agencyId !== agencyId) throw new Error("Unauthorized");
+  if (booking.status !== "INQUIRY") throw new Error("Booking is not in INQUIRY state");
+
+  const date = new Date(proposedDate);
+  if (isNaN(date.getTime())) throw new Error("Invalid date format");
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: "ALTERNATIVE_PROPOSED",
+      proposedDate: date,
+    },
+  });
+
+  await sendAlternativeDateEmail(
+    booking.trekkerEmail,
+    booking.trekkerName,
+    booking.package.title,
+    date,
+  );
+
+  if (booking.trekkerId) {
+    await notifyTrekker(booking.trekkerId, {
+      title: "Alternative Date Proposed",
+      body: `The agency has proposed a new date for ${booking.package.title}.`,
+      data: { bookingId, type: "ALTERNATIVE_PROPOSED", link: `/bookings/${bookingId}` },
+    });
+  }
+
+  return { bookingId, status: "ALTERNATIVE_PROPOSED", proposedDate: date };
+}
