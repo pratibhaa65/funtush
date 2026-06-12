@@ -57,6 +57,7 @@ export const createTrekker = async (data: CreateTrekkerInput) => {
             phone,
             country,
             emergencyContact: emergency_contact_phone,
+            emergencyContactName: emergency_contact_name,
         },
     });
 

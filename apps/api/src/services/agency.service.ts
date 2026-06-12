@@ -72,7 +72,7 @@ export const createAgency = async (data: CreateAgencyInput) => {
 
 
   // link user ↔ agency (AgencyUser)
-  const agencyUser = await db.agencyUser.create({
+  await db.agencyUser.create({
     data: {
       agencyId: agency.id,
       userId: user.id,
