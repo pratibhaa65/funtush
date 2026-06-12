@@ -4,6 +4,8 @@ import { db, redis } from "@funtush/database";
 import uploadRoutes from "./routes/upload.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import agencyRoutes from "./routes/agency.routes.js";
+import packageRoutes from "./routes/package.routes.js";
+import bookingRoutes from "./routes/booking.routes.js";
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";
 
 const app = express();
@@ -13,6 +15,8 @@ const port = Number(process.env.PORT ?? 4000);
 app.use(express.json());
 app.use("/", uploadRoutes);
 app.use('/', agencyRoutes);
+app.use("/", packageRoutes);
+app.use("/bookings", bookingRoutes);
 app.use("/auth", authRoutes);
 
 // Liveness probe consumed by Prometheus / the load balancer.
