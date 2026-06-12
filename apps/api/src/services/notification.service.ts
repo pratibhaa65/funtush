@@ -51,3 +51,45 @@ export async function notifyAgencyAdmins(
     }
 }
 
+// Send a push notification to a trekker by userId
+export async function notifyTrekker(
+    trekkerId: string,
+    payload: PushPayload,
+): Promise<void> {
+    const trekker = await prisma.trekker.findUnique({
+        where: { id: trekkerId },
+        include: { user: true },
+    });
+
+    if (!trekker) {
+        console.warn(`[FCM] Trekker ${trekkerId} not found`);
+        return;
+    }
+
+    const token = trekker.user.fcmToken;
+
+    if (!token) {
+        console.warn(`[FCM] No FCM token for trekker ${trekkerId}`);
+        return;
+    }
+
+    const response = await getFcm().send({
+        token,
+        notification: {
+            title: payload.title,
+            body: payload.body,
+        },
+        data: payload.data ?? {},
+        webpush: {
+            notification: {
+                title: payload.title,
+                body: payload.body,
+            },
+            fcmOptions: {
+                link: payload.data?.link,
+            },
+        },
+    });
+
+    console.log(`[FCM] Trekker notification sent: ${response}`);
+}
