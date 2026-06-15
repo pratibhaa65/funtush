@@ -1,5 +1,4 @@
 import { BookingStatus, db, Prisma } from "@funtush/database";
-import { getMongo } from "src/lib/mongo";
 
 interface customersQuery {
   page?: number;

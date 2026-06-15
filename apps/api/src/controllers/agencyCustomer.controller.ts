@@ -129,7 +129,7 @@ export const agencyGetCustomerProfile = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch customer profile",
+      message: error,
     });
   }
 };
@@ -153,7 +153,7 @@ export const getCustomerAnalytics = async (
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch analytics",
+      message: error,
     });
   }
 };
