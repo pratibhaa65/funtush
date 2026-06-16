@@ -10,10 +10,10 @@ export const registerAgency = async (req: Request, res: Response) => {
             status: "success",
             data: newAgency,
         });
-    } catch (err) {
+    } catch (err:any) {
         res.status(500).json({
             status: "error",
-            message: err
+            message: err.message
         });
     }
 };
@@ -158,10 +158,10 @@ export const updateAgencySubscription = async (req: Request & { agencyId?: strin
 };
 
 
-export const updateAgencyProfile = async (req: Request & { agencyId?: string }, res: Response) => {
+export const updateAgencyProfile = async (req: Request, res: Response) => {
 
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({
@@ -176,18 +176,18 @@ export const updateAgencyProfile = async (req: Request & { agencyId?: string }, 
             success: true,
             data: result.data,
         });
-    } catch (err) {
+    } catch (err:any) {
         res.status(500).json({
             status: "error",
-            message: err
+            message: err.message
         });
     }
 };
 
 
-export const updateAgencyDomain = async (req: Request & { agencyId?: string }, res: Response) => {
+export const updateAgencyDomain = async (req: Request, res: Response) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({
@@ -221,9 +221,9 @@ export const updateAgencyDomain = async (req: Request & { agencyId?: string }, r
 };
 
 
-export const agencyKYCSubmission = async (req: Request & { agencyId?: string }, res: Response) => {
+export const agencyKYCSubmission = async (req: Request, res: Response) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({
@@ -294,10 +294,10 @@ export const agencyKYCSubmission = async (req: Request & { agencyId?: string }, 
             status: "success",
             data: result,
         });
-    } catch (err) {
+    } catch (err:any) {
         res.status(500).json({
             status: "error",
-            message: err
+            message: err.message
         });
     }
 
