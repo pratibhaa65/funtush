@@ -6,9 +6,11 @@ import { requestLogger } from "./middleware/requestLogger.middleware";
 import adminRouter from "./routes/admin/index";
 import agencyRoutes from "./routes/agency.routes";
 import bookingRoutes from "./routes/booking.routes";
+import paymentWebhookRoutes from "./routes/payment.webhook.routes";
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job";
+import reportsRouter from "./routes/agency/reports.route";
 
-const app = express();
+const app = express();  
 
 app.use(express.json());
 app.use(requestLogger);
@@ -35,8 +37,10 @@ app.post("/sos", (_req, res) => {
 app.use(resolveTenant);
 app.use(rateLimitMiddleware);
 app.use("/admin", adminRouter);
+app.use("/agencies/me/reports", reportsRouter);
 app.use("/", agencyRoutes);
 app.use("/bookings", bookingRoutes);
+app.use("/webhooks/payment", paymentWebhookRoutes);
 
 if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
   startSubscriptionCron();
