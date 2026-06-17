@@ -76,8 +76,6 @@ export const createAgency = async (data: CreateAgencyInput) => {
     data: {
       agencyId: agency.id,
       userId: user.id,
-      email,
-      password_hash: hashedPassword,
       role: "AGENCY_ADMIN",
     },
   });

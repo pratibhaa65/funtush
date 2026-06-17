@@ -1,32 +1,30 @@
-import { BookingStatus, db, Prisma } from "@funtush/database"
-
+import { BookingStatus, db, Prisma } from "@funtush/database";
 
 interface customersQuery {
-    page?: number;
-    limit?: number;
-    search?: string;
-    customerType?: "repeat" | "new";
-    destination?: string;
-    bookingStatus?: BookingStatus;
-    sortBy?: "lastBookingDate" | "totalBookings" | "totalSpending";
-    sortOrder?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+  search?: string;
+  customerType?: "repeat" | "new";
+  destination?: string;
+  bookingStatus?: BookingStatus;
+  sortBy?: "lastBookingDate" | "totalBookings" | "totalSpending";
+  sortOrder?: "asc" | "desc";
 }
 
 export const agencyCustomerListService = async (agencyId: string, query: customersQuery,) => {
 
-    const {
-        page = 1,
-        limit = 20,
-        search,
-        destination,
-        bookingStatus,
-        customerType,
-        sortBy = "lastBookingDate",
-        sortOrder = "desc",
-    } = query;
+  const {
+    page = 1,
+    limit = 20,
+    search,
+    destination,
+    bookingStatus,
+    customerType,
+    sortBy = "lastBookingDate",
+    sortOrder = "desc",
+  } = query;
 
-
- const bookingWhere: Prisma.BookingWhereInput = {
+  const bookingWhere: Prisma.BookingWhereInput = {
     agencyId,
   };
 
@@ -35,14 +33,14 @@ export const agencyCustomerListService = async (agencyId: string, query: custome
   }
 
   if (destination) {
-  bookingWhere.package = {
-    destinations: {
-      some: {
-        id: destination,
+    bookingWhere.package = {
+      destinations: {
+        some: {
+          id: destination,
+        },
       },
-    },
-  };
-}
+    };
+  }
 
   /**
    * STEP 1
@@ -79,17 +77,27 @@ export const agencyCustomerListService = async (agencyId: string, query: custome
   }
 
   /**
+ * Remove bookings that are not linked to a trekker
+ */
+  const groupedCustomersWithTrekker = groupedCustomers.filter(
+    (
+      customer,
+    ): customer is typeof customer & { trekkerId: string } =>
+      customer.trekkerId !== null,
+  );
+
+  /**
    * STEP 2
    * Fetch trekker details
    */
-  const trekkerIds = groupedCustomers.map(
+  const trekkerIds = groupedCustomersWithTrekker.map(
     (customer) => customer.trekkerId,
   );
 
   const trekkers = await db.trekker.findMany({
     where: {
       id: {
-        in: trekkerIds,
+        in: trekkerIds
       },
     },
 
@@ -115,10 +123,15 @@ export const agencyCustomerListService = async (agencyId: string, query: custome
    * STEP 3
    * Merge aggregation + trekker details
    */
-  let customers = groupedCustomers.map((customer) => {
+  let customers = groupedCustomersWithTrekker.map((customer) => {
+
     const trekker = trekkerMap.get(customer.trekkerId);
 
     const totalBookings = customer._count.id;
+    const totalSpending = customer._sum.totalPrice
+      ? Number(customer._sum.totalPrice)
+      : 0;
+    const lastBookingDate = customer._max.createdAt;
 
     return {
       trekkerId: customer.trekkerId,
@@ -129,14 +142,11 @@ export const agencyCustomerListService = async (agencyId: string, query: custome
       country: trekker?.country ?? null,
 
       totalBookings,
-
-      totalSpending: Number(
-        customer._sum.totalPrice ?? 0,
-      ),
-
-      lastBookingDate: customer._max.createdAt,
+      totalSpending,
+      lastBookingDate,
 
       repeatVisitor: totalBookings > 1,
+      isNewCustomer: totalBookings === 1,
     };
   });
 
@@ -183,34 +193,26 @@ export const agencyCustomerListService = async (agencyId: string, query: custome
    * Sorting
    */
   customers.sort((a, b) => {
-    let result = 0;
 
     switch (sortBy) {
       case "totalBookings":
-        result =
-          a.totalBookings - b.totalBookings;
-        break;
+        return a.totalBookings - b.totalBookings;
 
       case "totalSpending":
-        result =
-          a.totalSpending - b.totalSpending;
-        break;
+        return a.totalSpending - b.totalSpending;
 
       case "lastBookingDate":
       default:
-        result =
-          new Date(
-            a.lastBookingDate ?? 0,
-          ).getTime() -
-          new Date(
-            b.lastBookingDate ?? 0,
-          ).getTime();
+        return (
+          new Date(a.lastBookingDate ?? 0).getTime() -
+          new Date(b.lastBookingDate ?? 0).getTime()
+        );
     }
-
-    return sortOrder === "asc"
-      ? result
-      : result * -1;
   });
+
+  if (sortOrder === "desc") {
+    customers.reverse();
+  }
 
   /**
    * STEP 7
@@ -236,229 +238,293 @@ export const agencyCustomerListService = async (agencyId: string, query: custome
     },
   };
 }
-    
-//     const bookings = await db.booking.findMany({
-
-//         where: {
-//             agencyId,
-
-//             ...(bookingStatus && {
-//                 status: bookingStatus,
-//             }),
-
-//             ...(search && {
-//                 OR: [
-//                     {
-//                         trekker: {
-//                             fullName: {
-//                                 contains: search,
-//                                 mode: "insensitive",
-//                             },
-//                             phone: {
-//                                 contains: search,
-//                                 mode: "insensitive",
-//                             },
-//                             user: {
-//                                 email: {
-//                                     contains: search,
-//                                     mode: "insensitive",
-//                                 },
-//                             },
-//                         },
-//                     },
-//                 ],
-//             }),
 
 
-//             ...(destination && {
-//                 package: {
-//                     destinations: {
-//                         some: {
-//                             name: {
-//                                 contains: destination,
-//                                 mode: "insensitive",
-//                             },
-//                         },
-//                     },
-//                 },
-//             }),
-//         },
-//     });
 
-//     const grouped = await db.booking.groupBy({
-//         by: ["trekkerId"],
+/**
+ Agency staff - add private note about customers
+ */
+interface customerNoteInput {
+  noteText: string;
+}
+export const customerNoteService = async (
+  data: customerNoteInput,
+  customerId: string,
+  staffId: string,
+  agencyId: string
+) => {
+  const {
+    noteText
+  } = data;
 
-//         where
+  const customerNote = await db.customerNote.create({
+    data: {
+      trekkerId: customerId,
+      staffId,
+      noteText,
+      agencyId,
+    },
+  });
 
-//             _count: {
-//                 id: true,
-//             },
-
-//             _sum: {
-//                 totalPrice: true,
-//             },
-
-//             _max: {
-//                 createdAt: true,
-//             },
-
-//             _min: {
-//                 createdAt: true,
-//             },
-        
-//     });
+  return {
+    success: true,
+    message: "Customer note added successfully",
+    data: {
+      customerNote
+    },
+  };
+};
 
 
-//     let customers = grouped;
 
-//     if (customerType === "repeat") {
-//         customers = customers.filter(
-//             (customer) => customer._count.id > 1,
-//         );
-//     }
+/**
+ Agencies are able to see the private note created by staffs. 
+ */
+export const getCustomerNoteService = async (
+  customerId: string,
+  agencyId: string
+) => {
 
-//     if (customerType === "new") {
-//         customers = customers.filter(
-//             (customer) => customer._count.id === 1,
-//         );
-//     }
-
-//     customers.sort((a, b) => {
-//         let comparison = 0;
-
-//         switch (sortBy) {
-//             case "totalBookings":
-//                 comparison =
-//                     a._count.id - b._count.id;
-//                 break;
-
-//             case "totalSpending":
-//                 comparison =
-//                     Number(a._sum.totalPrice ?? 0) -
-//                     Number(b._sum.totalPrice ?? 0);
-//                 break;
-
-//             default:
-//                 comparison =
-//                     (a._max.createdAt?.getTime() ?? 0) -
-//                     (b._max.createdAt?.getTime() ?? 0);
-//         }
-
-//         return sortOrder === "asc"
-//             ? comparison
-//             : -comparison;
-//     });
-
-//     const total = customers.length;
-
-//     const paginatedCustomers = customers.slice(
-//         (page - 1) * limit,
-//         page * limit,
-//     );
-
-//     const trekkerIds = paginatedCustomers.map(
-//         (customer) => customer.trekkerId,
-//     );
-
-//     const trekkers = await db.trekker.findMany({
-//         where: {
-//             id: {
-//                 in: trekkerIds,
-//             },
-//         },
-
-//         include: {
-//             user: {
-//                 select: {
-//                     email: true,
-//                 },
-//             },
-//         },
-//     });
-
-//     const trekkerMap = new Map(
-//         trekkers.map((trekker) => [
-//             trekker.id,
-//             trekker,
-//         ]),
-//     );
-
-//     const latestBookings = await db.booking.findMany({
-//         where: {
-//             agencyId,
-//             trekkerId: {
-//                 in: trekkerIds,
-//             },
-//         },
-
-//         orderBy: {
-//             createdAt: "desc",
-//         },
-
-//         select: {
-//             trekkerId: true,
-//             status: true,
-//         },
-//     });
-
-//     const latestStatusMap = new Map<
-//         string,
-//         BookingStatus
-//     >();
-
-//     for (const booking of latestBookings) {
-//         if (!latestStatusMap.has(booking.trekkerId)) {
-//             latestStatusMap.set(
-//                 booking.trekkerId,
-//                 booking.status,
-//             );
-//         }
-//     }
-
-//     const data = paginatedCustomers.map((customer) => {
-//         const trekker = trekkerMap.get(
-//             customer.trekkerId,
-//         );
-
-//         return {
-//             trekkerId: customer.trekkerId,
-
-//             fullName: trekker?.fullName,
-//             email: trekker?.user.email,
-//             phone: trekker?.phone,
-
-//             totalBookings: customer._count.id,
-
-//             totalSpending: Number(
-//                 customer._sum.totalPrice ?? 0,
-//             ),
-
-//             firstBookingDate:
-//                 customer._min.createdAt,
-
-//             lastBookingDate:
-//                 customer._max.createdAt,
-
-//             latestBookingStatus:
-//                 latestStatusMap.get(
-//                     customer.trekkerId,
-//                 ) ?? null,
-
-//             repeatVisitor:
-//                 customer._count.id > 1,
-//         };
-//     });
+  const customerNote = await db.customerNote.findMany({
+    where: {
+      trekkerId: customerId,
+      agencyId: agencyId
+    },
+    orderBy: {
+      createdAt: "desc", // newest first
+    },
+  });
 
 
-//     return {
-//         data,
-//         meta: {
-//             page,
-//             limit,
-//             total,
-//             totalPages: Math.ceil(total / limit),
-//         },
-//     };
+  return {
+    success: true,
+    message: "Customer Notes",
+    data: {
+      customerNote
+    },
+  };
+};
 
-// }
+
+
+/**
+ Agency -> gets customer profile
+ */
+export const agencyGetCustomersProfileService = async (
+  customerId: string,
+  agencyId: string
+) => {
+
+  const customer = await db.trekker.findFirst({
+    where: {
+      id: customerId,
+      bookings: {
+        some: {
+          agencyId,
+        },
+      },
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+      preference: true,
+    },
+  });
+
+  // if (!customer) {
+  //   throw new Error("Customer not found");
+  // }
+
+
+  const bookings = await db.booking.findMany({
+    where: {
+      agencyId,
+      trekkerId: customerId,
+    },
+    include: {
+      package: {
+        select: {
+          id: true,
+          title: true,
+          destinations: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      paymentLink: {
+        select: {
+          id: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+
+  if (!bookings.length) {
+    throw new Error("Booking not found");
+  }
+
+  const notes = await db.customerNote.findMany({
+    where: {
+      agencyId,
+      trekkerId: customerId,
+    },
+    include: {
+      staff: {
+        include: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+
+  const totalSpent = bookings.reduce(
+    (sum, booking) => sum + Number(booking.totalPrice || 0),
+    0
+  );
+
+  const visitCount = bookings.length;
+
+  const firstBookingDate =
+    bookings.length > 0
+      ? bookings[bookings.length - 1].createdAt
+      : null;
+
+  const lastBookingDate =
+    bookings.length > 0
+      ? bookings[0].createdAt
+      : null;
+
+  const averageBookingValue =
+    visitCount > 0 ? totalSpent / visitCount : 0;
+
+  const preferredDestinations = await db.trekkerPreference.findMany({
+    where: {
+      trekkerId: customerId
+    },
+    select: {
+      preferredDestinations: true
+    }
+  })
+
+  const loyalityFlag = visitCount >= 3;
+
+  return {
+    success: true,
+    message: "Customer profile fetched successfully",
+    data: {
+      customer,
+
+      stats: {
+        totalSpent,
+        visitCount,
+        firstBookingDate,
+        lastBookingDate,
+        averageBookingValue,
+        preferredDestinations,
+        badge: loyalityFlag ? "Loyal Customer" : null,
+      },
+
+      bookingHistory: bookings,
+      notes,
+    },
+  };
+};
+
+
+/**
+ Agency -> gets customer analytics
+ */
+export const customerAnalyticsService = async (  //— top customers by spending, repeat rate, new vs returning ratio
+  agencyId: string
+) => {
+
+  const trekkers = await db.trekker.findMany({
+    where: {
+      bookings: {
+        some: {
+          agencyId,
+        },
+      },
+    },
+    include: {
+      bookings: {
+        where: { agencyId },
+        select: {
+          totalPrice: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  const totalCustomers = trekkers.length;
+
+  const newCustomers = trekkers.filter(
+    (t) => t.bookings.length === 1
+  );
+
+  const returningCustomers = trekkers.filter(
+    (t) => t.bookings.length > 1
+  );
+
+  const repeatRate =
+    totalCustomers > 0
+      ? (returningCustomers.length / totalCustomers) * 100
+      : 0;
+
+  const newVsReturningRatio =
+    returningCustomers.length > 0
+      ? `${newCustomers.length}:${returningCustomers.length}`
+      : `${newCustomers.length}:0`;
+
+  const topCustomersBySpending = trekkers
+    .map((t) => {
+      const totalSpent = (t.bookings || []).reduce(
+        (sum, b) => sum + Number(b.totalPrice || 0),
+        0
+      );
+
+      const bookingCount = t.bookings.length
+
+      return {
+        trekkerId: t.id,
+        name: t.fullName,
+        totalSpent,
+        bookingCount,
+      };
+    })
+    .sort((a, b) => b.totalSpent - a.totalSpent)
+    .slice(0, 10);
+
+
+  return {
+    data: {
+      agency: agencyId,
+      totalCustomers: totalCustomers,
+      newCustomers: newCustomers.length,
+      returningCustomers: returningCustomers.length,
+      repeatRate: repeatRate,
+      newVsReturningRatio: newVsReturningRatio,
+      topCustomersBySpending: topCustomersBySpending,
+    },
+  };
+};
+
 

@@ -34,11 +34,11 @@ export const SubscriptionTiers = async (req: Request, res: Response) => {
 };
 
 export const getAgencyDashboard = async (
-    req: Request & { agencyId?: string },
+    req: Request,
     res: Response
 ) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({ message: "Unauthorized" });
@@ -58,11 +58,11 @@ export const getAgencyDashboard = async (
 };
 
 export const acceptBooking = async (
-    req: Request & { agencyId?: string },
+    req: Request,
     res: Response
 ) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
         // const bookingId = req.params.bookingId;
 
         // if (!bookingId || Array.isArray(bookingId)) {
@@ -95,11 +95,11 @@ export const acceptBooking = async (
 
 
 export const publishPackage = async (
-    req: Request & { agencyId?: string },
+    req: Request,
     res: Response
 ) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
         // const packageId = req.params.packageId;
 
         // if (!packageId || Array.isArray(packageId)) {
@@ -131,9 +131,9 @@ export const publishPackage = async (
 };
 
 
-export const updateAgencySubscription = async (req: Request & { agencyId?: string }, res: Response) => {
+export const updateAgencySubscription = async (req: Request, res: Response) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
         const { tier } = req.body;
 
         if (!agencyId) {
@@ -158,10 +158,10 @@ export const updateAgencySubscription = async (req: Request & { agencyId?: strin
 };
 
 
-export const updateAgencyProfile = async (req: Request & { agencyId?: string }, res: Response) => {
+export const updateAgencyProfile = async (req: Request, res: Response) => {
 
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({
@@ -185,9 +185,9 @@ export const updateAgencyProfile = async (req: Request & { agencyId?: string }, 
 };
 
 
-export const updateAgencyDomain = async (req: Request & { agencyId?: string }, res: Response) => {
+export const updateAgencyDomain = async (req: Request, res: Response) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({
@@ -221,9 +221,9 @@ export const updateAgencyDomain = async (req: Request & { agencyId?: string }, r
 };
 
 
-export const agencyKYCSubmission = async (req: Request & { agencyId?: string }, res: Response) => {
+export const agencyKYCSubmission = async (req: Request, res: Response) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({
@@ -305,9 +305,9 @@ export const agencyKYCSubmission = async (req: Request & { agencyId?: string }, 
 
 
 
-export const agencyKYCStatus = async (req: Request & { agencyId?: string }, res: Response) => {
+export const agencyKYCStatus = async (req: Request, res: Response) => {
     try {
-        const agencyId = req.agencyId;
+        const agencyId = req.agencyId as string;
 
         if (!agencyId) {
             return res.status(401).json({

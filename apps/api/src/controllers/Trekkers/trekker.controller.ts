@@ -22,7 +22,6 @@ export const trekkerPreference= async(req:Request , res: Response) => {
 
         /** 'trekkerId' passed in request body in service */
         const trekkerId = req.body;
-
         const preference = await trekkerPreferenceService(req.body, trekkerId);
         res.status(201).json({
             status: "success",
