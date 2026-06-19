@@ -32,7 +32,7 @@ import { db } from "@funtush/database";
  * Prisma `where` fragment for "an agency that may appear on the marketplace".
  * Reused by every query here so the visibility rule lives in exactly one place.
  */
-const LISTABLE_AGENCY = {
+export const LISTABLE_AGENCY = {
   status: "ACTIVE" as const,
   tier: { name: { not: "FREE" } },
 };
@@ -51,7 +51,7 @@ function slugify(value: string): string {
 }
 
 /** Round a rating average to one decimal, or null when there are no reviews yet. */
-function roundRating(avg: number | null | undefined): number | null {
+export function roundRating(avg: number | null | undefined): number | null {
   return typeof avg === "number" ? Math.round(avg * 10) / 10 : null;
 }
 
@@ -66,6 +66,9 @@ export interface AgencyListItem {
   description: string | null;
   rating: { average: number | null; count: number };
   topDestinations: string[];
+  // True when a Super Admin has boosted this agency above its tier baseline.
+  // Correction #2: this label is mandatory and can never be hidden.
+  sponsored: boolean;
 }
 
 /**
@@ -80,6 +83,7 @@ export async function listAgencies(): Promise<AgencyListItem[]> {
       id: true,
       name: true,
       slug: true,
+      priorityOverride: true,
       tier: { select: { name: true } },
       profile: { select: { logo: true, description: true } },
       destinations: {
@@ -114,6 +118,7 @@ export async function listAgencies(): Promise<AgencyListItem[]> {
       description: a.profile?.description ?? null,
       rating: { average: roundRating(r?._avg.rating), count: r?._count.rating ?? 0 },
       topDestinations,
+      sponsored: a.priorityOverride > 0,
     };
   });
 }
@@ -134,6 +139,7 @@ export async function getAgencyProfile(slug: string) {
       name: true,
       slug: true,
       createdAt: true,
+      priorityOverride: true,
       tier: { select: { name: true } },
       kyc: { select: { status: true } },
       profile: {
@@ -202,9 +208,10 @@ export async function getAgencyProfile(slug: string) {
   const badges: string[] = [];
   if (agency.kyc?.status === "APPROVED") badges.push("Verified");
   if (averageRating !== null && averageRating >= 4.5 && reviewCount >= 5) badges.push("Top Rated");
-  // NOTE: the "Sponsored"/"Featured" badge (Correction #2) is applied when an
-  // agency's priority_override exceeds its tier baseline. That field doesn't
-  // exist in the schema yet, so it's intentionally omitted here.
+  // "Sponsored" badge (Correction #2): applied automatically whenever a Super
+  // Admin sets priority_override above the tier baseline (0). It is mandatory
+  // and cannot be hidden, so it lives here in derived data, not a toggle.
+  if (agency.priorityOverride > 0) badges.push("Sponsored");
 
   const p = agency.profile;
   return {
