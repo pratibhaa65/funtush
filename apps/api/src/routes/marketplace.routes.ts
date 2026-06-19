@@ -5,6 +5,9 @@ import {
   getAgency,
   getDestinations,
   getDestination,
+  featured,
+  trending,
+  seasonal,
 } from "../controllers/marketplace.controller.js";
 
 /**
@@ -31,5 +34,13 @@ router.get("/agencies/:slug", getAgency);
 // GET /marketplace/destinations/:slug  → master destination page (agencies operating there)
 router.get("/destinations", getDestinations);
 router.get("/destinations/:slug", getDestination);
+
+// ── Curated homepage sections (Day 4) ───────────────────────────────────────
+// GET /marketplace/featured   → Sponsored (Large-tier boosted) + highest-rated + most-booked-this-month
+// GET /marketplace/trending   → packages with the most inquiries in the last 7 days
+// GET /marketplace/seasonal   → packages whose destination's best season matches the current month
+router.get("/featured", featured);
+router.get("/trending", trending);
+router.get("/seasonal", seasonal);
 
 export default router;

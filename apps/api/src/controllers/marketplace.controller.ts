@@ -7,6 +7,11 @@ import {
   listDestinations,
   getDestinationBySlug,
 } from "../services/marketplaceDirectory.service.js";
+import {
+  getFeatured,
+  getTrending,
+  getSeasonal,
+} from "../services/marketplaceCuration.service.js";
 
 /**
  * ── Marketplace search controller (Week 3 · Day 2) ──────────────────────────
@@ -143,6 +148,46 @@ export const getDestination = async (req: Request, res: Response) => {
     return res.json({ success: true, data: destination });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load destination";
+    return res.status(500).json({ success: false, message });
+  }
+};
+
+/* ── Curated homepage sections (Week 3 · Day 4) ───────────────────────────────
+ *
+ * All three handlers are PUBLIC (no auth) and read-only. They return the curated
+ * content the marketplace homepage renders: a Featured block, a Trending row, and
+ * a Seasonal row. Curation logic lives in the curation service.
+ */
+
+/** GET /marketplace/featured — Sponsored + highest-rated + most-booked-this-month mix. */
+export const featured = async (_req: Request, res: Response) => {
+  try {
+    const data = await getFeatured();
+    return res.json({ success: true, data });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load featured content";
+    return res.status(500).json({ success: false, message });
+  }
+};
+
+/** GET /marketplace/trending — packages with the most inquiries in the last 7 days. */
+export const trending = async (_req: Request, res: Response) => {
+  try {
+    const data = await getTrending();
+    return res.json({ success: true, data, meta: { total: data.length } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load trending packages";
+    return res.status(500).json({ success: false, message });
+  }
+};
+
+/** GET /marketplace/seasonal — packages whose best season matches the current month. */
+export const seasonal = async (_req: Request, res: Response) => {
+  try {
+    const data = await getSeasonal();
+    return res.json({ success: true, data, meta: { total: data.length } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load seasonal packages";
     return res.status(500).json({ success: false, message });
   }
 };
