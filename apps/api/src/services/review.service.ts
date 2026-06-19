@@ -4,106 +4,252 @@ import { sendReviewInvitationEmail } from "src/utils/email";
 
 export const sendReviewInvitations = async () => {
 
-  const completedBookings = await db.booking.findMany({
-    where: {
-      status: "COMPLETED",
-      review: null,
-    },
-    include: {
-      trekker: {
-        include: {
-          user: true,
+    const completedBookings = await db.booking.findMany({
+        where: {
+            status: "COMPLETED",
+            review: null,
         },
-      },
-    },
-  });
-
-  for (const booking of completedBookings) {
-    const existing = await db.reviewInvitation.findUnique({
-      where: {
-        bookingId: booking.id,
-      },
+        include: {
+            trekker: {
+                include: {
+                    user: true,
+                },
+            },
+        },
     });
 
-    if (existing) continue;
+    for (const booking of completedBookings) {
+        const existing = await db.reviewInvitation.findUnique({
+            where: {
+                bookingId: booking.id,
+            },
+        });
 
-    const token = crypto.randomBytes(32).toString("hex");
+        if (existing) continue;
 
-    await db.reviewInvitation.create({
-      data: {
-        bookingId: booking.id,
-        token,
-        expiresAt: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ),
-      },
-    });
+        const token = crypto.randomBytes(32).toString("hex");
 
-    const invitationLink =
-      `http://funtush.com/review?token=${token}`;
-    //   `${process.env.FRONTEND_URL}/review?token=${token}`;
+        await db.reviewInvitation.create({
+            data: {
+                bookingId: booking.id,
+                token,
+                expiresAt: new Date(
+                    Date.now() + 30 * 24 * 60 * 60 * 1000
+                ),
+            },
+        });
 
-    await sendReviewInvitationEmail(
-      booking.trekkerEmail,
-      booking.trekkerName,
-      invitationLink
-    );
-  }
+        const invitationLink =
+            `http://funtush.com/review?token=${token}`;
+        //   `${process.env.FRONTEND_URL}/review?token=${token}`;
+
+        await sendReviewInvitationEmail(
+            booking.trekkerEmail,
+            booking.trekkerName,
+            invitationLink
+        );
+    }
 };
 
 
 export const createReviewService = async (
-  token: string,
-  rating: number,
-  text: string,
-  photos: string[]
+    token: string,
+    rating: number,
+    text: string,
+    photos: string[]
 ) => {
-  const invitation =
-    await db.reviewInvitation.findUnique({
-      where: { token },
-      include: {
-        booking: true,
-      },
+    const invitation =
+        await db.reviewInvitation.findUnique({
+            where: { token },
+            include: {
+                booking: true,
+            },
+        });
+
+    if (!invitation)
+        throw new Error("Invalid token");
+
+    if (invitation.used)
+        throw new Error("Token already used");
+
+    if (invitation.expiresAt < new Date())
+        throw new Error("Token expired");
+
+    if (invitation.booking.status !== "COMPLETED")
+        throw new Error("Booking not completed");
+
+    const review = await db.$transaction(async (tx) => {
+        const createdReview = await tx.review.create({
+            data: {
+                bookingId: invitation.booking.id,
+                trekkerId: invitation.booking.trekkerId!,
+                agencyId: invitation.booking.agencyId,
+
+                rating,
+                text,
+                photos,
+
+                verified: true,
+            },
+        });
+
+        await tx.reviewInvitation.update({
+            where: {
+                id: invitation.id,
+            },
+            data: {
+                used: true,
+            },
+        });
+
+        return createdReview;
     });
 
-  if (!invitation)
-    throw new Error("Invalid token");
+    return review;
+};
 
-  if (invitation.used)
-    throw new Error("Token already used");
 
-  if (invitation.expiresAt < new Date())
-    throw new Error("Token expired");
+export const getAgencyReview = async (slug: string) => {
 
-  if (invitation.booking.status !== "COMPLETED")
-    throw new Error("Booking not completed");
-
-  const review = await db.$transaction(async (tx) => {
-    const createdReview = await tx.review.create({
-      data: {
-        bookingId: invitation.booking.id,
-        trekkerId: invitation.booking.trekkerId!,
-        agencyId: invitation.booking.agencyId,
-
-        rating,
-        text,
-        photos,
-
-        verified: true,
-      },
+    const agency = await db.agency.findUnique({
+        where: {
+            slug,
+        },
     });
 
-    await tx.reviewInvitation.update({
-      where: {
-        id: invitation.id,
-      },
-      data: {
-        used: true,
-      },
+    if (!agency) {
+        throw new Error("Agency not found");
+    }
+
+    const reviews = await db.review.findMany({
+        where: {
+            agencyId: agency.id,
+        },
+        include: {
+            trekker: {
+                select: {
+                    fullName: true,
+                },
+            },
+            response: true,
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
     });
 
-    return createdReview;
-  });
+    const aggregate = await db.review.aggregate({
+        _avg: { rating: true },
+        _count: { rating: true },
+        where: { agencyId: agency.id },
+    });
 
-  return review;
+    // declaring empty stars - for count
+    const distribution: Record<number, number> = {
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+    };
+
+    //grouped by count of each ratings i.e. if two '5' ratings, then 5 : 2
+    reviews.forEach((review) => {
+        if (review.rating >= 1 && review.rating <= 5) {
+            distribution[review.rating]++;  //placing rating in place to their value
+        }
+    });
+
+    const starDistribution = Object.entries(distribution).reduce(
+        (acc, [star, count]) => {    // ("acc:final object", ["star:eg.1,2,3]","count:no. of reviews for that star")
+            acc[star] = reviews.length
+                ? Number(((count / reviews.length) * 100).toFixed(1))
+                : 0;
+
+            return acc;
+        },
+        {} as Record<string, number>
+    );
+
+    return {
+        averageRating: Number((aggregate._avg.rating || 0).toFixed(1)),
+        totalReviews: aggregate._count.rating,
+        starDistribution,
+        reviews,
+    };
+};
+
+
+export const respondToReviewService = async (
+    reviewId: string,
+    agencyId: string,
+    responseText: string
+) => {
+    const review = await db.review.findFirst({
+        where: {
+            id: reviewId,
+            agencyId: agencyId,
+        },
+        include: {
+            response: true,
+        },
+    });
+
+    if (!review) {
+        throw new Error("Review not found");
+    }
+
+    if (review.response) {
+        throw new Error("Already responded");
+    }
+
+    return db.reviewResponse.create({
+        data: {
+            reviewId,
+            agencyUserId: agencyId, 
+            responseText,
+        },
+    });
+};
+
+
+
+export const flagReviewService = async (
+    reviewId: string,
+    agencyId: string,
+    reason: string
+) => {
+    const review = await db.review.findFirst({
+        where: {
+            id: reviewId,
+        },
+    });
+
+    if (!review) {
+        throw new Error("Review not found");
+    }
+
+    if (review?.agencyId !== agencyId) {
+        throw new Error("Not allowed to flag this review");
+    }
+
+
+    const existingFlag = await db.reviewFlag.findFirst({
+        where: {
+            reviewId,
+            flaggedBy: agencyId,
+        },
+    });
+
+    if (existingFlag) {
+        throw new Error("You already flagged this review");
+    }
+
+    return db.reviewFlag.create({
+        data: {
+            reviewId,
+            reason,
+            flaggedBy: agencyId,
+        },
+    });
 };
