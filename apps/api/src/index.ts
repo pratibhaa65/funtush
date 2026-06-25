@@ -8,9 +8,7 @@ import packageRoutes from "./routes/package.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
 import agencyCustomerRoutes from "./routes/agencyCustomer.routes.js";
 import trekkerRoutes from "./routes/trekker.routes.js";
-import trekkerRoutes from "./routes/trekker.routes.js";
 import marketplaceRoutes from "./routes/marketplace.routes.js";
-import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";ad campaign queue — list/approve/reject/pause endpoints, service, schema + tests)
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";
 import { configureIndexes } from "./services/search.service.js";
 import { db, redis, connectMongo } from "@funtush/database";
