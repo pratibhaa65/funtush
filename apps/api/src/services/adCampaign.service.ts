@@ -36,7 +36,7 @@ const agencySummary = {
 /** All PENDING campaigns from Large-tier agencies, oldest first (FIFO review). */
 export async function getPendingCampaigns() {
   return prisma.adCampaign.findMany({
-    where: { status: "PENDING", agency: { tier: LARGE_TIER } },
+   where: { status: "PENDING", agency: { tier: { name: LARGE_TIER } } },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
