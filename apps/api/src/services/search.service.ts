@@ -426,6 +426,9 @@ export async function searchMarketplacePackages(
     ? await bookedAgencyIdsFor(params.trekkerUserId)
     : new Set<string>();
 
+  console.log("[search] trekkerUserId:", params.trekkerUserId);
+  console.log("[search] boostedAgencies:", Array.from(boostedAgencies));
+
   const ranked = hits
     .map((hit) => {
       const relevance = hit._rankingScore ?? 1;
@@ -443,9 +446,10 @@ export async function searchMarketplacePackages(
   const total = ranked.length;
   const pages = Math.ceil(total / limit);
   const start = (page - 1) * limit;
-  const data = ranked.slice(start, start + limit).map(({ hit }) => {
+  const data = ranked.slice(start, start + limit).map(({ hit, rankScore }) => {
     const { _rankingScore, ...doc } = hit;
     void _rankingScore;
+    doc.visibilityScore = rankScore;  // Show the boosted score
     return doc as PackageDocument;
   });
 
