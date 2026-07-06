@@ -54,7 +54,7 @@ import {
   searchMarketplacePackages,
   PACKAGE_INDEX,
   AGENCY_INDEX,
-} from "./search.service.js";
+} from "../services/search.service.js";
 import { getMeili } from "../lib/meilisearch.js";
 
 const meili = getMeili();

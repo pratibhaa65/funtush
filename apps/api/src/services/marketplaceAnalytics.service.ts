@@ -49,14 +49,20 @@ export async function recordClick(
   searchQuery?: string
 ) {
   const today = startOfDay(new Date());
-
-  // Increment click count in today's impression record
-  await prisma.marketplaceImpression.updateMany({
+  await prisma.marketplaceImpression.upsert({
     where: {
+      agencyId_date: {
+        agencyId,
+        date: today,
+      },
+    },
+    create: {
       agencyId,
       date: today,
+      impressionCount: 0,
+      clickCount: 1,
     },
-    data: {
+    update: {
       clickCount: {
         increment: 1,
       },
@@ -124,20 +130,20 @@ export async function getAgencyMarketplaceImpressions(
   });
 
   // Aggregate stats across all days in period
-const totalImpressions = impressions.reduce(
-  (sum: number, imp:typeof impressions[number]) => sum + imp.impressionCount,
-  0
-);
+  const totalImpressions = impressions.reduce(
+    (sum: number, imp: typeof impressions[number]) => sum + imp.impressionCount,
+    0
+  );
 
-const totalClicks = impressions.reduce(
-  (sum: number, imp:typeof impressions[number]) => sum + imp.clickCount,
-  0
-);
+  const totalClicks = impressions.reduce(
+    (sum: number, imp: typeof impressions[number]) => sum + imp.clickCount,
+    0
+  );
 
-const totalConversions = impressions.reduce(
-  (sum: number, imp:typeof impressions[number]) => sum + imp.conversionCount,
-  0
-);
+  const totalConversions = impressions.reduce(
+    (sum: number, imp: typeof impressions[number]) => sum + imp.conversionCount,
+    0
+  );
   const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) : "0.00";
   const conversionRate =
     totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(2) : "0.00";
