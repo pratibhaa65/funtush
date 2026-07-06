@@ -13,16 +13,6 @@ import {
   getSeasonal,
 } from "../services/marketplaceCuration.service.js";
 
-/**
- * ── Marketplace search controller (Week 3 · Day 2) ──────────────────────────
- *
- * Public endpoint: GET /marketplace/packages
- *
- * Parses + validates the query string, optionally identifies a logged-in
- * trekker (for personalization), then delegates ranking/pagination to the
- * search service. The endpoint is PUBLIC — anyone can browse the marketplace —
- * so a missing or invalid token is fine; it just means "no personalization".
- */
 
 const VALID_DIFFICULTIES = new Set(["EASY", "MODERATE", "CHALLENGING", "DIFFICULT"]);
 
@@ -102,11 +92,25 @@ export const searchMarketplace = async (req: Request, res: Response) => {
  * browse-by-hand directory pages, backed by Postgres via the directory service.
  */
 
-/** GET /marketplace/agencies — list all listable agencies. */
-export const getAgencies = async (_req: Request, res: Response) => {
+/**
+ * GET /marketplace/agencies — list listable agencies.
+ * Query params: search, tier, region, min_rating, page, limit.
+ *
+ * FIX: previously called listAgencies() with no arguments at all, silently
+ * dropping every query param a client sent — filters/pagination existed in
+ * the service's documented interface but nothing ever wired req.query to it.
+ */
+export const getAgencies = async (req: Request, res: Response) => {
   try {
-    const data = await listAgencies();
-    return res.json({ success: true, data, meta: { total: data.length } });
+    const result = await listAgencies({
+      search: asString(req.query.search),
+      tier: asString(req.query.tier),
+      region: asString(req.query.region),
+      minRating: asNumber(req.query.min_rating),
+      page: asNumber(req.query.page),
+      limit: asNumber(req.query.limit),
+    });
+    return res.json({ success: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load agencies";
     return res.status(500).json({ success: false, message });
@@ -127,11 +131,23 @@ export const getAgency = async (req: Request, res: Response) => {
   }
 };
 
-/** GET /marketplace/destinations — list all master destinations. */
-export const getDestinations = async (_req: Request, res: Response) => {
+/**
+ * GET /marketplace/destinations — list master destinations.
+ * Query params: region, altitude_min, altitude_max, season, page, limit.
+ *
+ * FIX: same gap as getAgencies — query params were previously dropped.
+ */
+export const getDestinations = async (req: Request, res: Response) => {
   try {
-    const data = await listDestinations();
-    return res.json({ success: true, data, meta: { total: data.length } });
+    const result = await listDestinations({
+      region: asString(req.query.region),
+      altitudeMin: asNumber(req.query.altitude_min),
+      altitudeMax: asNumber(req.query.altitude_max),
+      season: asString(req.query.season),
+      page: asNumber(req.query.page),
+      limit: asNumber(req.query.limit),
+    });
+    return res.json({ success: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load destinations";
     return res.status(500).json({ success: false, message });
@@ -154,9 +170,7 @@ export const getDestination = async (req: Request, res: Response) => {
 
 /* ── Curated homepage sections (Week 3 · Day 4) ───────────────────────────────
  *
- * All three handlers are PUBLIC (no auth) and read-only. They return the curated
- * content the marketplace homepage renders: a Featured block, a Trending row, and
- * a Seasonal row. Curation logic lives in the curation service.
+ * Out of scope for Day 3 — left untouched.
  */
 
 /** GET /marketplace/featured — Sponsored + highest-rated + most-booked-this-month mix. */
