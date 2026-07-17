@@ -1,4 +1,4 @@
-import "dotenv/config";
+﻿import "dotenv/config";
 import express, { type Request, type Response, type NextFunction } from "express";
 import { MulterError } from "multer";
 
@@ -10,7 +10,6 @@ import bookingRoutes from "./routes/booking.routes.js";
 import agencyCustomerRoutes from "./routes/agencyCustomer.routes.js";
 import trekkerRoutes from "./routes/trekker.routes.js";
 import marketplaceRoutes from "./routes/marketplace.routes.js";
-<<<<<<< HEAD
 import reviewRoutes from "./routes/review.route.js";
 import staffRoutes from "./routes/staff.routes";
 import adminRoutes from "./routes/admin/index.js";
@@ -20,16 +19,10 @@ import fraudRouter from "./routes/admin/fraud.route.js";
 import { startVisibilityScoreCron } from "./jobs/visibilityScore.job.js";
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";
 import { configureIndexes } from "./services/search.service.js";
-=======
-import staffRoutes from "./routes/staff.routes";
-import fraudRouter from "./fraud.route.js";
-import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";
-import { configureIndexes } from "./services/search.service.js";
 import {
   initNotificationService,
   ensureNotificationIndexes,
 } from "./services/notificationDispatch.service";
->>>>>>> 0436bf3 (feat: Day 1 — notification dispatch with FCM push, priority matrix, and DND handling)
 import { db, redis, connectMongo } from "@funtush/database";
 
 const app = express();
@@ -48,7 +41,6 @@ app.use("/marketplace", marketplaceRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/auth", authRoutes);
 app.use("/agencies/me/staff", staffRoutes);
-<<<<<<< HEAD
 app.use("/admin", adminRoutes);
 app.use("/fraud", fraudRouter);
 
@@ -56,9 +48,6 @@ app.use("/fraud", fraudRouter);
 app.use("/", agencyAnalyticsRoutes);
 
 app.use("/", reviewRoutes);
-=======
-app.use("/fraud", fraudRouter);
->>>>>>> 0436bf3 (feat: Day 1 — notification dispatch with FCM push, priority matrix, and DND handling)
 
 app.get("/health", async (_req: Request, res: Response) => {
   const [dbOk, redisOk] = await Promise.all([
@@ -90,36 +79,28 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
-<<<<<<< HEAD
-  connectMongo().catch(console.error);
+  void (async () => {
+    try {
+      // Notification service needs the *Mongo* Db (not the Prisma client `db`).
+      // If connectMongo() doesn't return the Db, swap in the actual Mongo
+      // export from @funtush/database here.
+      const mongoDb = await connectMongo();
+      initNotificationService(mongoDb);
+      await ensureNotificationIndexes();
+    } catch (err) {
+      console.error("Notification service init failed:", err);
+    }
+  })();
+
   startSubscriptionCron();
   startVisibilityScoreCron();
 
   // Ensure Meilisearch indexes + settings exist on boot (idempotent, non-blocking).
   configureIndexes().catch(console.error);
-=======
-  void (async () => {
-    try {
-      // IMPORTANT: notification service needs the *Mongo* Db, not the Prisma
-      // client (`db` above is Prisma — that's why /health calls $queryRaw).
-      // If connectMongo() doesn't return the Db, import the Mongo handle
-      // that @funtush/database exports and pass that instead.
-      const mongoDb = await connectMongo();
-      initNotificationService(mongoDb);
-      await ensureNotificationIndexes();
->>>>>>> 0436bf3 (feat: Day 1 — notification dispatch with FCM push, priority matrix, and DND handling)
 
-      startSubscriptionCron();
-      await configureIndexes().catch(console.error);
-
-      app.listen(port, () => {
-        console.log(`Funtush API listening on port ${port}`);
-      });
-    } catch (err) {
-      console.error("Boot failed:", err);
-      process.exit(1);
-    }
-  })();
+  app.listen(port, () => {
+    console.log(`Funtush API listening on port ${port}`);
+  });
 }
 
 export { app };
