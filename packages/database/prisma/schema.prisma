@@ -142,12 +142,9 @@ model Agency {
   marketplaceImpressions MarketplaceImpression[]
   marketplaceClicks      MarketplaceClick[]
 
-<<<<<<< HEAD
   paymentMethods AgencyPaymentMethod[]
-=======
   accounts       Account[]
   journalEntries JournalEntry[]
->>>>>>> origin/main
 
   @@map("agencies")
 }
