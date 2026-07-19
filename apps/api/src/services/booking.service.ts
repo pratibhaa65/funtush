@@ -6,6 +6,7 @@ import { sendInquiryConfirmationEmail, sendAgencyInquiryAlertEmail } from "../ut
 import { notifyAgencyAdmins, notifyTrekker } from "./notification.service.js";
 import { confirmSlotsForBooking } from "./departureDate.service.js";
 import { recordConversion } from "./marketplaceAnalytics.service.js";
+import { validate } from "node-cron";
 
 //Types
 export interface InquiryInput {
