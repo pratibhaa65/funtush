@@ -161,6 +161,8 @@ model Agency {
   accounts       Account[]
   journalEntries JournalEntry[]
 
+  stripeSubscription StripeSubscription?
+
   @@map("agencies")
 }
 
@@ -720,17 +722,17 @@ model Account {
 }
 
 model JournalEntry {
-  id          String   @id @default(uuid())
-  agencyId    String   @map("agency_id")
-  entryDate   DateTime @map("entry_date") @db.Date
-  description String
+  id           String   @id @default(uuid())
+  agencyId     String   @map("agency_id")
+  entryDate    DateTime @map("entry_date") @db.Date
+  description  String
   // Multi-currency (Day 2): a journal entry is one financial transaction, so
   // the currency lives here — both of its lines are always the same currency.
-  currencyCode String  @default("NPR") @map("currency_code")
+  currencyCode String   @default("NPR") @map("currency_code")
   // Income entries can trace back to the booking whose payment they record.
-  bookingId   String?  @map("booking_id")
-  createdBy   String?  @map("created_by")
-  createdAt   DateTime @default(now()) @map("created_at")
+  bookingId    String?  @map("booking_id")
+  createdBy    String?  @map("created_by")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   agency  Agency        @relation(fields: [agencyId], references: [id], onDelete: Cascade)
   booking Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
@@ -881,4 +883,39 @@ model Branch {
 
   @@index([agencyId])
   @@map("branches")
+}
+
+model StripeSubscription {
+  id                   String    @id @default(cuid())
+  agencyId             String    @unique @map("agency_id")
+  stripeCustomerId     String    @unique @map("stripe_customer_id")
+  stripeSubscriptionId String    @unique @map("stripe_subscription_id")
+  status               String    @default("active") // active, canceled, past_due, grace_period
+  currentPeriodEnd     DateTime  @map("current_period_end")
+  graceUntil           DateTime? @map("grace_until") // 7-day grace period
+  lastInvoiceId        String?   @map("last_invoice_id")
+  lastInvoiceStatus    String?   @map("last_invoice_status") // paid, failed, draft
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+
+  @@index([agencyId])
+  @@index([status])
+  @@map("stripe_subscriptions")
+}
+
+model StripeWebhookLog {
+  id           String    @id @default(cuid())
+  eventId      String    @unique @map("event_id")
+  eventType    String    @map("event_type")
+  resourceId   String?   @map("resource_id")
+  status       String    @default("pending") // pending, processed, failed
+  errorMessage String?   @map("error_message")
+  processedAt  DateTime? @map("processed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([eventType])
+  @@index([status])
+  @@map("stripe_webhook_logs")
 }
