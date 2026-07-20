@@ -2,9 +2,9 @@
 
 ## Overview
 
-Implemented a secure and scalable payment integration system that enables agencies to securely manage payment gateway credentials and subscribe to paid plans through Stripe. The solution combines encrypted credential storage, subscription lifecycle management, webhook processing, and automated grace period handling to ensure secure payment operations and reliable billing.
+Implemented a secure and scalable payment integration system that enables agencies to securely manage payment gateway credentials and subscribe to paid plans through both **Stripe** and **Nepali payment gateways (Khalti, eSewa, and ConnectIPS)**. The solution combines encrypted credential storage, subscription lifecycle management, webhook processing, local payment gateway integration, unified payment verification, and automated grace period handling to ensure secure payment operations and reliable billing.
 
-> **Note:** Stripe integration serves as a template for international expansion and is not currently available in Nepal.
+> **Note:** Stripe integration serves as a template for international expansion and is not currently available in Nepal. Nepali payment gateways (Khalti, eSewa, and ConnectIPS) are the primary payment methods for agencies in Nepal.
 
 
 ## Features
@@ -21,7 +21,7 @@ Implemented encrypted storage for payment gateway credentials using **AES-256-GC
 - Encryption key loaded from environment variables
 - Credentials stored as write-only and never exposed through API responses
 
-###  Subscription Management
+### Subscription Management
 
 Integrated Stripe subscription billing to manage agency subscription plans and automate the billing lifecycle.
 
@@ -31,6 +31,35 @@ Integrated Stripe subscription billing to manage agency subscription plans and a
 2. Stripe customer is created using the agency email.
 3. Stripe subscription is generated with tier-based pricing.
 4. Client Secret is returned for frontend payment confirmation.
+
+### Nepali Payment Gateway Integration
+
+Integrated **Khalti**, **eSewa**, and **ConnectIPS** to support subscription payments through local payment providers.
+
+#### Supported Providers
+
+- Khalti
+- eSewa
+- ConnectIPS
+
+#### Payment Flow
+
+1. Agency selects a subscription tier.
+2. Agency chooses a preferred payment provider.
+3. Payment request is initiated with the selected provider.
+4. Provider-specific payment verification is performed.
+5. Subscription is activated automatically after successful verification.
+
+### Unified Payment Verification
+
+Implemented a single verification endpoint that supports all Nepali payment providers.
+
+#### Verification Process
+
+- Detects the payment provider automatically.
+- Verifies payment with the respective provider.
+- Records payment verification for auditing.
+- Updates agency subscription after successful payment.
 
 ### Webhook Processing
 
@@ -57,7 +86,7 @@ Implemented secure Stripe webhook handling with signature verification to synchr
 - Marks subscription as **Cancelled**
 - Records cancellation events
 
-###  Grace Period Management
+### Grace Period Management
 
 Implemented automatic grace period handling to improve user experience during failed subscription payments.
 
@@ -68,6 +97,7 @@ When a payment fails:
 - Agency may retry payment or downgrade the subscription
 - If payment is not completed within the grace period, the subscription is automatically cancelled
 
+
 ## Database Models
 
 | Model | Purpose |
@@ -75,6 +105,10 @@ When a payment fails:
 | `AgencyPaymentMethod` | Stores encrypted payment gateway credentials |
 | `StripeSubscription` | Stores Stripe subscription details and billing status |
 | `StripeWebhookLog` | Records processed Stripe webhook events for auditing and debugging |
+| `KhaltiTransaction` | Stores Khalti payment details and verification status |
+| `EsewaTransaction` | Stores eSewa payment details and reference IDs |
+| `ConnectIPSTransaction` | Stores ConnectIPS transfer details and payment status |
+| `NepaliPaymentVerification` | Stores payment verification logs for auditing |
 
 
 ## API Endpoints
@@ -124,7 +158,7 @@ Enables or disables a payment method.
 
 - Updated payment method metadata
 
-### Subscription Billing
+### Stripe Subscription Billing
 
 #### `POST /billing/subscribe`
 
@@ -149,6 +183,51 @@ Supported events:
 - `invoice.payment_failed`
 - `customer.subscription.deleted`
 
+### Nepali Payment Gateways
+
+#### `POST /billing/subscribe/khalti/initiate`
+
+Initiates a Khalti subscription payment.
+
+**Response**
+
+- Transaction ID
+- Khalti payment payload
+
+#### `POST /billing/subscribe/esewa/initiate`
+
+Initiates an eSewa subscription payment.
+
+**Response**
+
+- Transaction ID
+- eSewa payment payload
+
+#### `POST /billing/subscribe/connectips/initiate`
+
+Initiates a ConnectIPS subscription payment.
+
+**Response**
+
+- Transaction ID
+- Transfer details
+
+#### `POST /billing/subscribe/verify`
+
+Verifies payments from Khalti, eSewa, and ConnectIPS through a unified endpoint.
+
+**Request Body**
+
+- Payment Provider
+- Transaction Reference
+- Provider-specific verification data
+
+**Response**
+
+- Payment verification status
+- Transaction details
+- Updated subscription information
+
 
 ## Authentication & Security
 
@@ -164,6 +243,12 @@ Require:
 - Stripe webhook signature verification
 - Protection against unauthorized webhook requests
 
+### Payment Verification
+
+- Provider-specific verification
+- Unified verification endpoint
+- Transaction audit logging
+
 
 ## Environment Variables
 
@@ -172,14 +257,11 @@ Require:
 | `ENCRYPTION_KEY` | AES-256-GCM encryption key for credential storage |
 | `STRIPE_SECRET_KEY` | Stripe Secret API Key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe Webhook Signing Secret |
+| `KHALTI_PUBLIC_KEY` | Khalti Public API Key |
+| `KHALTI_SECRET_KEY` | Khalti Secret API Key |
+| `ESEWA_MERCHANT_CODE` | eSewa Merchant Code |
+| `ESEWA_MERCHANT_SECRET` | eSewa Merchant Secret |
+| `CONNECTIPS_CLIENT_ID` | ConnectIPS Client ID |
+| `CONNECTIPS_CLIENT_SECRET` | ConnectIPS Client Secret |
 
-
-## Key Highlights
-
-- AES-256-GCM encrypted payment credential storage
-- Write-only credential management
-- Stripe subscription lifecycle management
-- Secure webhook signature verification
-- Automatic 7-day grace period for failed payments
-- Subscription status synchronization with Stripe
-- Comprehensive webhook event logging for auditing and troubleshooting
+international (Stripe) and local (Nepali) payment providers
