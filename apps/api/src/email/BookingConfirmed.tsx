@@ -7,7 +7,6 @@ import {
   Hr,
   Html,
   Img,
-  Link,
   Row,
   Section,
   Text,
@@ -54,10 +53,9 @@ export const BookingConfirmed = ({
           <Text style={greeting}>Hi {firstName},</Text>
 
           <Text style={body}>
-            🎉 Your booking for <strong>{trekName}</strong> is confirmed!
+            Your booking for <strong>{trekName}</strong> is confirmed!
           </Text>
 
-          {/* Booking Details Card */}
           <Section style={detailsCard}>
             <Row>
               <Column style={{ width: '50%' }}>
@@ -98,7 +96,7 @@ export const BookingConfirmed = ({
           </Text>
 
           <Button style={button} href={itineraryPdfUrl}>
-            📄 Download Itinerary
+            Download Itinerary
           </Button>
 
           <Button style={buttonSecondary} href={dashboardUrl}>
@@ -108,7 +106,7 @@ export const BookingConfirmed = ({
           <Hr style={hr} />
 
           <Text style={subtext}>
-            💡 <strong>What's next?</strong>
+            What's next?
           </Text>
           <ul style={listStyle}>
             <li style={listItem}>
@@ -143,7 +141,6 @@ export const BookingConfirmed = ({
   </Html>
 );
 
-// Styles (reuse from InquiryReceived + new styles)
 const main = {
   backgroundColor: '#f9fafb',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',

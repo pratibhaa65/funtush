@@ -5,7 +5,7 @@ import { authenticate } from '../middleware/auth';
 const router = express.Router();
 
 /**
- * POST /api/emails/inquiry-received
+ * POST /emails/inquiry-received
  */
 router.post('/inquiry-received', authenticate, async (req, res) => {
   try {
@@ -19,15 +19,14 @@ router.post('/inquiry-received', authenticate, async (req, res) => {
     });
 
     res.json(result);
-  } catch (error) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : 'Email send failed',
-    });
+  } catch (_error) {
+    const message = _error instanceof Error ? _error.message : 'Email send failed';
+    res.status(500).json({ error: message });
   }
 });
 
 /**
- * POST /api/emails/booking-confirmed
+ * POST /emails/booking-confirmed
  */
 router.post('/booking-confirmed', authenticate, async (req, res) => {
   try {
@@ -57,11 +56,133 @@ router.post('/booking-confirmed', authenticate, async (req, res) => {
     });
 
     res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Email send failed' });
+  } catch (_error) {
+    const message = _error instanceof Error ? _error.message : 'Email send failed';
+    res.status(500).json({ error: message });
   }
 });
 
-// Similar routes for other email types...
+/**
+ * POST /emails/payment-link
+ */
+router.post('/payment-link', authenticate, async (req, res) => {
+  try {
+    const { to, firstName, bookingId, trekName, amount, paymentUrl, dueDate } =
+      req.body;
+
+    const result = await emailService.sendPaymentLink(to, {
+      firstName,
+      bookingId,
+      trekName,
+      amount,
+      paymentUrl,
+      dueDate,
+    });
+
+    res.json(result);
+  } catch (_error) {
+    const message = _error instanceof Error ? _error.message : 'Email send failed';
+    res.status(500).json({ error: message });
+  }
+});
+
+/**
+ * POST /emails/trek-reminder
+ */
+router.post('/trek-reminder', authenticate, async (req, res) => {
+  try {
+    const {
+      to,
+      firstName,
+      trekName,
+      startDate,
+      departureTime,
+      meetingLocation,
+      guidePhone,
+      checklist,
+    } = req.body;
+
+    const result = await emailService.sendTrekReminder(to, {
+      firstName,
+      trekName,
+      startDate,
+      departureTime,
+      meetingLocation,
+      guidePhone,
+      checklist,
+    });
+
+    res.json(result);
+  } catch (_error) {
+    const message = _error instanceof Error ? _error.message : 'Email send failed';
+    res.status(500).json({ error: message });
+  }
+});
+
+/**
+ * POST /emails/guide-contact
+ */
+router.post('/guide-contact', authenticate, async (req, res) => {
+  try {
+    const { to, trekkerName, trekName, guideName, guidePhone, guideEmail } =
+      req.body;
+
+    const result = await emailService.sendGuideContact(to, {
+      trekkerName,
+      trekName,
+      guideName,
+      guidePhone,
+      guideEmail,
+    });
+
+    res.json(result);
+  } catch (_error) {
+    const message = _error instanceof Error ? _error.message : 'Email send failed';
+    res.status(500).json({ error: message });
+  }
+});
+
+/**
+ * POST /emails/review-invitation
+ */
+router.post('/review-invitation', authenticate, async (req, res) => {
+  try {
+    const { to, firstName, trekName, completionDate, reviewUrl } = req.body;
+
+    const result = await emailService.sendReviewInvitation(to, {
+      firstName,
+      trekName,
+      completionDate,
+      reviewUrl,
+    });
+
+    res.json(result);
+  } catch (_error) {
+    const message = _error instanceof Error ? _error.message : 'Email send failed';
+    res.status(500).json({ error: message });
+  }
+});
+
+/**
+ * POST /emails/sos-notification
+ */
+router.post('/sos-notification', authenticate, async (req, res) => {
+  try {
+    const { to, sosType, location, trekName, guideName, timestamp } = req.body;
+
+    const result = await emailService.sendSOSNotification(to, {
+      sosType,
+      location,
+      trekName,
+      guideName,
+      timestamp,
+    });
+
+    res.json(result);
+  } catch (_error) {
+    const message = _error instanceof Error ? _error.message : 'Email send failed';
+    res.status(500).json({ error: message });
+  }
+});
 
 export default router;
