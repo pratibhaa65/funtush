@@ -201,4 +201,124 @@ router.post(
   }
 );
 
+// POST /agencies/me/payment-methods/fonepay/activate
+router.post(
+  '/fonepay/activate',
+  authenticateWithRefreshToken,
+  checkAgencyStatus,
+  async (req: AgencyRequest, res) => {
+    try {
+      const agencyId = req.agencyId;
+
+      if (!agencyId) {
+        return res.status(401).json({ error: 'Agency not found' });
+      }
+
+      const { activateFonepay } = await import(
+        '../services/fonepayService'
+      );
+      const result = await activateFonepay(agencyId);
+
+      res.json(result);
+    } catch (err) {
+      console.error('Fonepay activation error:', err);
+      res.status(400).json({
+        error: err instanceof Error ? err.message : 'Fonepay activation failed',
+      });
+    }
+  }
+);
+
+// POST /agencies/me/payment-methods/fonepay/qr/dynamic
+router.post(
+  '/fonepay/qr/dynamic',
+  authenticateWithRefreshToken,
+  checkAgencyStatus,
+  async (req: AgencyRequest, res) => {
+    try {
+      const { amount } = req.body;
+      const agencyId = req.agencyId;
+
+      if (!agencyId || !amount) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const { generateDynamicQR } = await import(
+        '../services/fonepayService'
+      );
+      const result = await generateDynamicQR(agencyId, amount);
+
+      res.json(result);
+    } catch (err) {
+      console.error('Dynamic QR generation error:', err);
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'QR generation failed',
+      });
+    }
+  }
+);
+
+// GET /agencies/me/payment-methods/fonepay/status
+router.get(
+  '/fonepay/status',
+  authenticateWithRefreshToken,
+  checkAgencyStatus,
+  async (req: AgencyRequest, res) => {
+    try {
+      const agencyId = req.agencyId;
+
+      if (!agencyId) {
+        return res.status(401).json({ error: 'Agency not found' });
+      }
+
+      const { getFonepayStatus } = await import(
+        '../services/fonepayService'
+      );
+      const status = await getFonepayStatus(agencyId);
+
+      res.json(status);
+    } catch (err) {
+      console.error('Fonepay status error:', err);
+      res.status(500).json({ error: 'Failed to fetch status' });
+    }
+  }
+);
+
+// POST /trekker/payment/fonepay/verify (no auth - trekker facing)
+router.post(
+  '/fonepay/verify',
+  async (req, res) => {
+    try {
+      const { agencyId, trekkerEmail, bookingId, transactionId, amount } =
+        req.body;
+
+      if (!agencyId || !trekkerEmail || !transactionId || !amount) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const { processAndVerifyFonepayTransaction } = await import(
+        '../services/fonepayService'
+      );
+      const transaction = await processAndVerifyFonepayTransaction(
+        agencyId,
+        trekkerEmail,
+        bookingId || null,
+        transactionId,
+        amount
+      );
+
+      res.json({
+        success: true,
+        message: 'Payment verified successfully',
+        transaction,
+      });
+    } catch (err) {
+      console.error('Payment verification error:', err);
+      res.status(500).json({
+        error: err instanceof Error ? err.message : 'Payment verification failed',
+      });
+    }
+  }
+);
+
 export default router;
