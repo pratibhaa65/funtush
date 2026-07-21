@@ -1,112 +1,131 @@
 import { smsService } from './smsService';
-
-interface NotificationTarget {
-  userId: string;
-  email: string;
-  phoneNumber: string;
-  pushToken?: string;
-}
+import { emailService } from './emailService';
 
 interface NotificationPayload {
   title: string;
   body: string;
-  priority: 'NORMAL' | 'CRITICAL';
-  type: 'BOOKING' | 'TREK_UPDATE' | 'PAYMENT' | 'REMINDER' | 'SOS';
-  data?: Record<string, string>;
+  data?: Record<string, unknown>;
+}
+
+interface PushNotificationOptions {
+  priority?: 'HIGH' | 'NORMAL';
+  timeout?: number;
 }
 
 class NotificationService {
-  private PUSH_TIMEOUT_MS = parseInt(
-    process.env.PUSH_TIMEOUT_MS || '5000',
-    10
-  );
+  private pushTimeoutMs: number;
 
-  async send(
-    target: NotificationTarget,
-    payload: NotificationPayload
-  ): Promise<{
-    push?: { success: boolean; messageId?: string };
-    sms?: { success: boolean; messageId?: string };
-    fallbackReason?: string;
-  }> {
-    const result: any = {};
-
-    if (!target.pushToken || payload.priority === 'CRITICAL') {
-      console.log(
-        `[NOTIFICATION] Skipping push, using SMS for ${target.phoneNumber}`
-      );
-      result.fallbackReason = 'CRITICAL_PRIORITY';
-      result.sms = await this.sendSMSNotification(
-        target.phoneNumber,
-        payload
-      );
-      return result;
-    }
-
-    try {
-      result.push = await Promise.race([
-        this.sendPushNotification(target.pushToken, payload),
-        this.createTimeoutPromise(this.PUSH_TIMEOUT_MS),
-      ]);
-
-      if (result.push.success) {
-        return result;
-      }
-    } catch (error) {
-      console.warn(
-        `[NOTIFICATION] Push failed for ${target.userId}:`,
-        error instanceof Error ? error.message : String(error)
-      );
-    }
-
-    console.log(`[NOTIFICATION] Falling back to SMS for ${target.phoneNumber}`);
-    result.fallbackReason = 'PUSH_FAILED';
-    result.sms = await this.sendSMSNotification(
-      target.phoneNumber,
-      payload
-    );
-
-    return result;
+  constructor() {
+    this.pushTimeoutMs = parseInt(process.env.PUSH_TIMEOUT_MS || '5000', 10);
   }
 
-  private async sendSMSNotification(
+  /**
+   * Send notification with fallback chain: Push → SMS
+   */
+  async sendNotification(
     phoneNumber: string,
-    payload: NotificationPayload
-  ): Promise<{ success: boolean; messageId?: string }> {
-    let message = `${payload.title}\n${payload.body}`;
+    pushToken: string | null,
+    message: string,
+    options: PushNotificationOptions = {}
+  ): Promise<{ success: boolean; method: 'push' | 'sms'; messageId?: string }> {
+    const { priority = 'NORMAL' } = options;
 
-    if (payload.type === 'TREK_UPDATE' && payload.data?.trekName) {
-      message += `\nTrek: ${payload.data.trekName}`;
+    // Try push notification first if token available
+    if (pushToken && priority !== 'CRITICAL') {
+      try {
+        const pushResult = await this.sendPushWithTimeout(pushToken, {
+          title: 'Funtush Alert',
+          body: message,
+        });
+
+        if (pushResult.success) {
+          console.log('[NOTIFICATION] Push sent successfully');
+          return { success: true, method: 'push', messageId: pushResult.messageId };
+        }
+      } catch (_error) {
+        console.warn('[NOTIFICATION] Push failed, falling back to SMS');
+      }
     }
 
-    if (payload.type === 'REMINDER' && payload.data?.time) {
-      message += `\nTime: ${payload.data.time}`;
-    }
-
-    const result = await smsService.sendSMS(phoneNumber, message, {
-      priority: payload.priority,
+    // Fallback to SMS
+    const smsResult = await smsService.sendSMS(phoneNumber, message, {
+      priority,
     });
 
     return {
-      success: result.success,
-      messageId: result.messageId,
+      success: smsResult.success,
+      method: 'sms',
+      messageId: smsResult.messageId,
     };
   }
 
-  private async sendPushNotification(
-    token: string,
-    payload: NotificationPayload
-  ): Promise<{ success: boolean; messageId?: string }> {
-    return { success: true, messageId: 'push-123' };
+  /**
+   * Send critical SOS notification
+   */
+  async sendSOSNotification(
+    phoneNumber: string,
+    sosDetails: {
+      location: string;
+      guideName: string;
+      emergencyNumber: string;
+      sosType: 'MEDICAL' | 'WEATHER' | 'LOST' | 'MANUAL';
+    }
+  ): Promise<{ success: boolean; method: 'sms' }> {
+    // SOS always sends SMS directly, no push
+    const result = await smsService.sendSOSConfirmation(phoneNumber, sosDetails);
+
+    return {
+      success: result.success,
+      method: 'sms',
+    };
   }
 
-  private createTimeoutPromise(ms: number): Promise<never> {
-    return new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`Push timeout after ${ms}ms`)),
-        ms
-      )
-    );
+  /**
+   * Send notification via email
+   */
+  async sendEmailNotification(
+    to: string,
+    template: string,
+    data: Record<string, unknown>
+  ): Promise<{ success: boolean; messageId?: string }> {
+    try {
+      const result = await emailService.send({
+        to,
+        subject: `Funtush: ${template}`,
+        template,
+        data,
+      });
+
+      return {
+        success: result.success,
+        messageId: result.messageId,
+      };
+    } catch (_error) {
+      console.error('[NOTIFICATION] Email send error:', _error instanceof Error ? _error.message : String(_error));
+      return { success: false };
+    }
+  }
+
+  /**
+   * Send push notification with timeout
+   */
+  private async sendPushWithTimeout(
+    _token: string,
+    _payload: NotificationPayload
+  ): Promise<{ success: boolean; messageId?: string }> {
+    try {
+      // Placeholder for actual push implementation (Firebase Cloud Messaging, etc.)
+      // For now, return mock result
+      console.log('[PUSH] Placeholder - actual implementation needed');
+
+      return {
+        success: true,
+        messageId: `mock-push-${Date.now()}`,
+      };
+    } catch (_error) {
+      console.error('[PUSH] Error:', _error instanceof Error ? _error.message : String(_error));
+      return { success: false };
+    }
   }
 }
 

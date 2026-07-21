@@ -22,11 +22,9 @@ class SMSService {
 
   constructor() {
     this.isTestMode = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
-    
-    // Set from number with fallback
+
     this.fromNumber = process.env.TWILIO_PHONE_NUMBER || '+1234567890';
 
-    // Initialize Twilio client with graceful error handling
     if (
       process.env.TWILIO_ACCOUNT_SID &&
       process.env.TWILIO_AUTH_TOKEN
@@ -37,8 +35,8 @@ class SMSService {
           process.env.TWILIO_AUTH_TOKEN
         );
         console.log('[SMS] Twilio client initialized successfully');
-      } catch (error) {
-        console.warn('[SMS] Failed to initialize Twilio client:', error instanceof Error ? error.message : String(error));
+      } catch (_error) {
+        console.warn('[SMS] Failed to initialize Twilio client:', _error instanceof Error ? _error.message : String(_error));
         this.client = null;
       }
     } else {
@@ -57,10 +55,9 @@ class SMSService {
       maxRetries = priority === 'CRITICAL' ? 3 : 1,
     } = options;
 
-    let retryCount = this.retryAttempts.get(phoneNumber) || 0;
+    const retryCount = this.retryAttempts.get(phoneNumber) || 0;
 
     try {
-      // Validate phone number
       if (!this.validatePhoneNumber(phoneNumber)) {
         return {
           success: false,
@@ -71,7 +68,6 @@ class SMSService {
 
       const truncatedMessage = this.truncateMessage(message);
 
-      // If no client (test mode or not configured), return mock success
       if (!this.client || this.isTestMode) {
         console.log(`[SMS MOCK] ${phoneNumber}: ${truncatedMessage.substring(0, 50)}...`);
         return {
@@ -82,7 +78,6 @@ class SMSService {
         };
       }
 
-      // Real SMS sending
       const result = await this.client.messages.create({
         body: truncatedMessage,
         from: this.fromNumber,
@@ -99,10 +94,9 @@ class SMSService {
         status: result.status,
         timestamp: new Date(),
       };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    } catch (_error) {
+      const errorMessage = _error instanceof Error ? _error.message : String(_error);
 
-      // Retry logic for CRITICAL messages
       if (priority === 'CRITICAL' && retryCount < maxRetries) {
         this.retryAttempts.set(phoneNumber, retryCount + 1);
         console.warn(
@@ -116,7 +110,6 @@ class SMSService {
         });
       }
 
-      // Failed after retries
       this.retryAttempts.delete(phoneNumber);
       console.error(`[SMS FAILED] ${phoneNumber} - ${errorMessage}`);
 
@@ -137,7 +130,7 @@ class SMSService {
       sosType: 'MEDICAL' | 'WEATHER' | 'LOST' | 'MANUAL';
     }
   ): Promise<SMSResult> {
-    const message = `🆘 SOS ALERT - Funtush
+    const message = `SOS ALERT - Funtush
 Location: ${sosDetails.location}
 Guide: ${sosDetails.guideName}
 Type: ${sosDetails.sosType}
@@ -152,7 +145,6 @@ Reply CANCEL to dismiss.`;
   }
 
   private validatePhoneNumber(phoneNumber: string): boolean {
-    // E.164 format: +1234567890
     const e164Regex = /^\+?[1-9]\d{1,14}$/;
     return e164Regex.test(phoneNumber.replace(/\s/g, ''));
   }
@@ -165,7 +157,7 @@ Reply CANCEL to dismiss.`;
       return message;
     }
 
-    const isUnicode = /[^\x00-\x7F]/.test(message);
+ const isUnicode = /[\u0080-\uffff]/.test(message);
     const limit = isUnicode ? UNICODE_SMS_LIMIT : SINGLE_SMS_LIMIT;
 
     return message.substring(0, limit - 3) + '...';
@@ -176,5 +168,4 @@ Reply CANCEL to dismiss.`;
   }
 }
 
-// Create singleton instance - no errors thrown
 export const smsService = new SMSService();

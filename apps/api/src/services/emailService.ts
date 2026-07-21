@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 
 interface EmailTemplateData {
-  [key: string]: string | number | boolean | any;
+  [key: string]: string | number | boolean | Record<string, unknown>;
 }
 
 interface EmailOptions {
@@ -29,20 +29,19 @@ class EmailService {
 
   constructor() {
     this.isTestMode = process.env.NODE_ENV === 'test' || !!process.env.VITEST;
-    
+
     this.fromEmail = process.env.SENDINGDOMAIN_EMAIL || 'noreply@funtush.com';
     this.brandName = process.env.BRAND_NAME || 'Funtush';
     this.brandUrl = process.env.BRAND_URL || 'https://funtush.com';
 
-    // Initialize Resend with graceful error handling
     const apiKey = process.env.RESEND_API_KEY;
-    
+
     if (apiKey) {
       try {
         this.resend = new Resend(apiKey);
         console.log('[EMAIL] Resend client initialized successfully');
-      } catch (error) {
-        console.warn('[EMAIL] Failed to initialize Resend client:', error instanceof Error ? error.message : String(error));
+      } catch (_error) {
+        console.warn('[EMAIL] Failed to initialize Resend client:', _error instanceof Error ? _error.message : String(_error));
         this.resend = null;
       }
     } else {
@@ -55,7 +54,6 @@ class EmailService {
     try {
       const htmlContent = this.getTemplateHTML(options.template, options.data);
 
-      // If no client (test mode or not configured), return mock success
       if (!this.resend || this.isTestMode) {
         const toAddresses = Array.isArray(options.to) ? options.to.join(', ') : options.to;
         console.log(`[EMAIL MOCK] ${options.template} → ${toAddresses}`);
@@ -66,7 +64,6 @@ class EmailService {
         };
       }
 
-      // Real email sending
       const response = await this.resend.emails.send({
         from: `${this.brandName} <${this.fromEmail}>`,
         to: Array.isArray(options.to) ? options.to : [options.to],
@@ -93,9 +90,9 @@ class EmailService {
         messageId: response.data?.id,
         timestamp: new Date(),
       };
-    } catch (error) {
+    } catch (_error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error);
+        _error instanceof Error ? _error.message : String(_error);
       console.error(`[EMAIL ERROR] ${options.template}:`, errorMessage);
 
       return {
@@ -238,7 +235,7 @@ class EmailService {
   ): Promise<EmailResult> {
     return this.send({
       to,
-      subject: `🆘 SOS Alert: ${data.trekName}`,
+      subject: `SOS Alert: ${data.trekName}`,
       template: 'sos-notification',
       data,
       priority: 'HIGH',
@@ -261,14 +258,14 @@ class EmailService {
       `,
       'booking-confirmed': `
         <h1>Hi ${data.firstName},</h1>
-        <p>🎉 Your booking for <strong>${data.trekName}</strong> is confirmed!</p>
+        <p>Your booking for <strong>${data.trekName}</strong> is confirmed!</p>
         <p><strong>Booking ID:</strong> ${data.bookingId}</p>
         <p><strong>Trek:</strong> ${data.trekName}</p>
         <p><strong>Start Date:</strong> ${data.startDate}</p>
         <p><strong>Duration:</strong> ${data.duration} days</p>
         <p><strong>Guide:</strong> ${data.guide}</p>
         <p><strong>Total Price:</strong> ${data.totalPrice}</p>
-        <a href="${data.itineraryPdfUrl}" style="background: #059669; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none;">📄 Download Itinerary</a>
+        <a href="${data.itineraryPdfUrl}" style="background: #059669; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none;">Download Itinerary</a>
         <a href="${data.dashboardUrl}" style="background: #e5e7eb; color: #1f2937; padding: 10px 20px; border-radius: 4px; text-decoration: none; margin-left: 10px;">View Booking Details</a>
         <hr>
         <p><small>© 2024 ${this.brandName}. All rights reserved.</small></p>
@@ -280,13 +277,13 @@ class EmailService {
         <p><strong>Amount Due:</strong> ${data.amount}</p>
         <p><strong>Booking ID:</strong> ${data.bookingId}</p>
         <p><strong>Payment Due:</strong> ${data.dueDate}</p>
-        <a href="${data.paymentUrl}" style="background: #059669; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none;">💳 Complete Payment Now</a>
-        <p>🔒 Your payment is secure and processed through Stripe.</p>
+        <a href="${data.paymentUrl}" style="background: #059669; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none;">Complete Payment Now</a>
+        <p>Your payment is secure and processed through Stripe.</p>
         <hr>
         <p><small>© 2024 ${this.brandName}. All rights reserved.</small></p>
       `,
       'trek-reminder': `
-        <h1>🏔️ Get Ready, ${data.firstName}!</h1>
+        <h1>Get Ready, ${data.firstName}!</h1>
         <p>Your <strong>${data.trekName}</strong> adventure starts in 48 hours!</p>
         <p><strong>Date:</strong> ${data.startDate}</p>
         <p><strong>Time:</strong> ${data.departureTime}</p>
@@ -304,8 +301,8 @@ class EmailService {
         <h1>Meet Your Guide!</h1>
         <p>We're thrilled to introduce you to <strong>${data.guideName}</strong>, who will be guiding you on the <strong>${data.trekName}</strong> trek.</p>
         <p><strong>Direct Contact:</strong></p>
-        <p>📱 ${data.guidePhone}</p>
-        <p>📧 ${data.guideEmail}</p>
+        <p>Phone: ${data.guidePhone}</p>
+        <p>Email: ${data.guideEmail}</p>
         <p>Feel free to reach out to introduce yourself!</p>
         <hr>
         <p><small>© 2024 ${this.brandName}. All rights reserved.</small></p>
@@ -314,20 +311,20 @@ class EmailService {
         <h1>How Was Your Trek?</h1>
         <p>Congratulations on completing <strong>${data.trekName}</strong> on ${data.completionDate}!</p>
         <p>Your feedback helps us improve our treks and helps other adventurers find the perfect expedition.</p>
-        <a href="${data.reviewUrl}" style="background: #f59e0b; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none;">⭐ Share Your Review</a>
+        <a href="${data.reviewUrl}" style="background: #f59e0b; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none;">Share Your Review</a>
         <p><strong>Special Offer:</strong> Leave a review and get <strong>10% off</strong> your next trek with code TREKAGAIN10!</p>
         <hr>
         <p><small>© 2024 ${this.brandName}. All rights reserved.</small></p>
       `,
       'sos-notification': `
-        <h1 style="color: #dc2626;">🆘 EMERGENCY ALERT</h1>
+        <h1 style="color: #dc2626;">SOS EMERGENCY ALERT</h1>
         <p><strong>Alert Type:</strong> ${data.sosType}</p>
         <p><strong>Trek:</strong> ${data.trekName}</p>
         <p><strong>Guide:</strong> ${data.guideName}</p>
         <p><strong>Location:</strong> ${data.location}</p>
         <p><strong>Reported:</strong> ${data.timestamp}</p>
         <p style="background: #fee2e2; padding: 10px; border-left: 4px solid #dc2626;">
-          <strong>⚠️ IMPORTANT:</strong> Our emergency response team has been notified and is monitoring the situation.
+          <strong>IMPORTANT:</strong> Our emergency response team has been notified and is monitoring the situation.
         </p>
         <hr>
         <p><small>This email contains sensitive information. Do not share publicly.</small></p>
@@ -341,5 +338,4 @@ class EmailService {
   }
 }
 
-// Create singleton instance - no errors thrown
 export const emailService = new EmailService();
