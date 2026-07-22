@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
     "target": "ESNext",
     "types": ["node"],
     "baseUrl": ".",
@@ -17,8 +18,9 @@
     "src",
     "../../packages/auth/src/utils/lockout.ts",
     "../../packages/auth/src/utils/redis.ts",
-    "../../packages/auth/src/utils/otpRateLimit.ts"
-, "src/test"  ],
+    "../../packages/auth/src/utils/otpRateLimit.ts",
+    "src/test"
+  ],
   "exclude": [
     "node_modules"
   ]

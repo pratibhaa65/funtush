@@ -12,10 +12,15 @@ import trekkerRoutes from "./routes/trekker.routes.js";
 import marketplaceRoutes from "./routes/marketplace.routes.js";
 import reviewRoutes from "./routes/review.route.js";
 import couponRoutes from "./routes/coupon.route.js";
+import financeRoutes from "./routes/finance.route.js";
 import staffRoutes from "./routes/staff.routes";
 import adminRoutes from "./routes/admin/index.js";
 import agencyAnalyticsRoutes from "./routes/agencyAnalytics.routes.js";
 import fraudRouter from "./routes/admin/fraud.route.js";
+
+// NEW: Email & SOS Routes
+import emailRoutes from "./routes/emailRoutes.js";
+import sosRoutes from "./routes/sosRoutes.js";
 
 import { startVisibilityScoreCron } from "./jobs/visibilityScore.job.js";
 import { startSubscriptionCron } from "./jobs/subscriptionExpiry.job.js";
@@ -50,6 +55,11 @@ app.use("/", agencyAnalyticsRoutes);
 
 app.use("/", reviewRoutes);
 app.use("/", couponRoutes);
+app.use("/", financeRoutes);
+
+// NEW: Email & SOS Routes
+app.use("/emails", emailRoutes);
+app.use("/sos", sosRoutes);
 
 app.get("/health", async (_req: Request, res: Response) => {
   const [dbOk, redisOk] = await Promise.all([
