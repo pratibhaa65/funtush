@@ -428,82 +428,16 @@ export const PaymentFailedEmail = ({
   </Html>
 );
 
-// ===== BREAK-GLASS INITIATED =====
-interface BreakGlassInitiatedProps {
-  firstName: string;
-  incidentType: string;
-  timestamp: string;
-  location: string;
-  statusUrl: string;
-}
-
-export const BreakGlassInitiatedEmail = ({
-  firstName,
-  incidentType,
-  timestamp,
-  location,
-  statusUrl,
-}: BreakGlassInitiatedProps) => (
-  <Html>
-    <Head />
-    <Body style={main}>
-      <Container style={container}>
-        <Section style={header}>
-          <Img src="https://funtush.com/logo.png" width="120" height="40" alt="Funtush" />
-        </Section>
-
-        <Section style={content}>
-          <Text style={greeting} style={{ color: '#dc2626' }}>
-            EMERGENCY BREAK-GLASS ACTIVATED
-          </Text>
-          <Text style={body}>
-            An emergency break-glass protocol has been activated.
-          </Text>
-
-          <Section style={detailsCard}>
-            <Row>
-              <Column style={{ width: '50%' }}>
-                <Text style={detailLabel}>Incident Type</Text>
-                <Text style={detailValue}>{incidentType}</Text>
-              </Column>
-              <Column style={{ width: '50%' }}>
-                <Text style={detailLabel}>Time</Text>
-                <Text style={detailValue}>{timestamp}</Text>
-              </Column>
-            </Row>
-            <Hr style={hr} />
-            <Row>
-              <Column>
-                <Text style={detailLabel}>Location</Text>
-                <Text style={detailValue}>{location}</Text>
-              </Column>
-            </Row>
-          </Section>
-
-          <Button style={button} href={statusUrl}>
-            View Status
-          </Button>
-          <Hr style={hr} />
-        </Section>
-
-        <Section style={footer}>
-          <Text style={footerText}>© 2024 Funtush. All rights reserved.</Text>
-        </Section>
-      </Container>
-    </Body>
-  </Html>
-);
-
-// ===== BREAK-GLASS CLOSED =====
+/// ===== BREAK-GLASS CLOSED =====
 interface BreakGlassClosedProps {
-  _firstName: string;
+  _firstName: string;           // ✅ ADD UNDERSCORE HERE
   incidentType: string;
   resolution: string;
   closedTime: string;
 }
 
 export const BreakGlassClosedEmail = ({
-  _firstName,
+  _firstName,                   // ✅ CHANGE TO _firstName
   incidentType,
   resolution,
   closedTime,
@@ -553,6 +487,7 @@ export const BreakGlassClosedEmail = ({
       </Container>
     </Body>
   </Html>
+
 );
 
 // ===== BUG STATUS CHANGED =====
