@@ -39,6 +39,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Wait for Postgres to be ready
+        run: |
+          until pg_isready -h localhost -p 5432 -U test_user; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
+
       - name: Run Prisma migrations
         working-directory: packages/database
         run: pnpm prisma migrate deploy
