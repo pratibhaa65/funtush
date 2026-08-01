@@ -45,9 +45,15 @@ export const instagramWidgetService = async (
         throw new Error("Agency not found");
     }
 
+<<<<<<< HEAD
     // if (agency.tier.name !== "LARGE") {
     //     throw new Error("Instagram Feed is only available for Large tier.");
     // }
+=======
+    if (agency.tier.name !== "LARGE") {
+        throw new Error("Instagram Feed is only available for Large tier.");
+    }
+>>>>>>> ae2bc24 (feat: Marketing/Analytics Widgets - instagram Oauth service)
 
     const profile = await db.agencyProfile.findUnique({
         where: {

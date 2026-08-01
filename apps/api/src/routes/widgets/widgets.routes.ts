@@ -1,5 +1,4 @@
 import { Router } from "express";
-<<<<<<< HEAD
 import { convertCurrencyController, currencyConverterWidgetController } from "src/controllers/widgets/currencyConverter.controller";
 import { InstagramWidgetController } from "src/controllers/widgets/instagram.controller";
 import { weatherRequestController, weatherWidgetController } from "src/controllers/widgets/weather.controller";
@@ -45,7 +44,6 @@ router.route('/currency-check')
 
 
 // ["FREE","MEDIUM","LARGE"]
-=======
 import { whatsappWidgetController } from "src/controllers/widgets/widgets.controller";
 
 const router = Router();
@@ -53,5 +51,4 @@ const router = Router();
 router.route('/agencies/me/widgets/whatsapp')
     .patch(whatsappWidgetController);
 
->>>>>>> 0938fd0 (feat: Marketing/Analytics Widgets routes)
 export default router;
