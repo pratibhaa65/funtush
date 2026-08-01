@@ -1,14 +1,10 @@
 import { Router } from "express";
-<<<<<<< HEAD
 import { convertCurrencyController, currencyConverterWidgetController } from "src/controllers/widgets/currencyConverter.controller";
 import { InstagramWidgetController } from "src/controllers/widgets/instagram.controller";
 import { weatherRequestController, weatherWidgetController } from "src/controllers/widgets/weather.controller";
 import { facebookPixelWidgetController, getWidgetsController, googleAnalyticsWidgetController, livechatWidgetController, whatsappWidgetController } from "src/controllers/widgets/widgets.controller";
 import { updateYoutubeWidgetController } from "src/controllers/widgets/youtube.controller";
 import { authenticateWithRefreshToken } from "src/middleware/refreshTokenAuthentication";
-=======
-import { livechatWidgetController, whatsappWidgetController } from "src/controllers/widgets/widgets.controller";
->>>>>>> ec4f5bd (feat: Utility Widgets - tier gate apply)
 import { tierGate } from "src/middleware/tierGateCheck.middleware";
 
 const router = Router();

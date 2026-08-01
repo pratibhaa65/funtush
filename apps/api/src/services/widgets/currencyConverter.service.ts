@@ -42,6 +42,7 @@ export const updateCurrencyConverterWidgetService = async (
         throw new Error("Agency not found.");
     }
 
+<<<<<<< HEAD
     // if (!["MEDIUM", "LARGE"].includes(agency.tier.name)) {
     //     throw new Error(
     //         "Currency Converter is available only for Medium and Large plans."
@@ -51,6 +52,17 @@ export const updateCurrencyConverterWidgetService = async (
     return await db.agencyProfile.update({
         where: {
             agencyId: agency.id,
+=======
+    if (!["MEDIUM", "LARGE"].includes(agency.tier.name)) {
+        throw new Error(
+            "Currency Converter is available only for Medium and Large plans."
+        );
+    }
+
+    return await db.agencyProfile.update({
+        where: {
+            id: agency.id,
+>>>>>>> 30a333e (feat: Utility Widgets - currency converter service)
         },
         data: {
             currencyConverterEnabled: data.enabled,
