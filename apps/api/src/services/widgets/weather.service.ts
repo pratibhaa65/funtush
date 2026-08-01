@@ -59,6 +59,7 @@ export const updateWeatherWidgetService = async (
         },
     });
 };
+
 export const weatherApiService = async (
     data: WeatherPayload
 ) => {
