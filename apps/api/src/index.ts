@@ -14,6 +14,7 @@ import mobileRoutes from "./routes/mobile.routes.js";
 import reviewRoutes from "./routes/review.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import branchRoutes from "./routes/branches.routes.js";
+<<<<<<< HEAD
 import brandingRoutes from "./routes/branding.routes.js";
 import siteConfigRoutes from "./routes/siteConfig.routes.js";
 import navigationRoutes from "./routes/navigation.routes.js";
@@ -21,6 +22,10 @@ import regenerationRoutes from "./routes/regeneration.routes.js";
 import widgetsRoutes from "./routes/widgets/widgets.routes.js";
 import instagramRoutes from "./routes/widgets/instagram.routes.js";
 import blogRoutes from "./routes/blog.routes.js";
+=======
+import widgetsRoutes from "./routes/widgets/widgets.routes.js";
+import instagramRoutes from "./routes/widgets/instagram.routes.js";
+>>>>>>> 57fe83d (feat: Marketing/Analytics Widgets - instagram Oauth routes)
 import financeRoutes from "./routes/finance.route.js";
 import staffRoutes from "./routes/staff.routes";
 import adminRoutes from "./routes/admin/index.js";
@@ -55,6 +60,7 @@ app.use("/", agencyCustomerRoutes);
 app.use("/", reviewRoutes);
 app.use("/", couponRoutes);
 app.use("/", branchRoutes);
+<<<<<<< HEAD
 // Brand identity settings + the public read the white-label renderer uses.
 app.use("/", brandingRoutes);
 // Site configuration: under-construction mode, top bar, popup, Funtush badge.
@@ -66,6 +72,10 @@ app.use("/", regenerationRoutes);
 app.use("/agencies/me/widgets", widgetsRoutes);
 app.use("/", instagramRoutes);
 app.use("/", blogRoutes);
+=======
+app.use("/", widgetsRoutes);
+app.use("/", instagramRoutes);
+>>>>>>> 57fe83d (feat: Marketing/Analytics Widgets - instagram Oauth routes)
 
 
 app.use("/", trekkerRoutes);
