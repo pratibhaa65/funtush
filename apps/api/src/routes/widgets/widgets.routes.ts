@@ -42,12 +42,6 @@ router.route('/currency-enable')
 router.route('/currency-check')
     .patch(authenticateWithRefreshToken, tierGate(["MEDIUM", "LARGE"]), convertCurrencyController);
 
-
-// ["FREE","MEDIUM","LARGE"]
-import { whatsappWidgetController } from "src/controllers/widgets/widgets.controller";
-
-const router = Router();
-
 router.route('/agencies/me/widgets/whatsapp')
     .patch(whatsappWidgetController);
 
