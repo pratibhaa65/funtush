@@ -827,7 +827,6 @@ model AgencyProfile {
   instagramAccessToken    String?   @map("instagram_access_token") @db.Text
   instagramTokenExpiresAt DateTime? @map("instagram_token_expires_at")
 
-<<<<<<< HEAD
   //Utility Widgets
   currencyConverterEnabled Boolean @default(false) @map("currency_converter_enabled")
 
@@ -839,13 +838,6 @@ model AgencyProfile {
   youtubeVideos    String[] @default([])
   maxYoutubeVideos Int?     @default(10)
 
-=======
-  currencyConverterEnabled Boolean @default(false) @map("currency_converter_enabled")
-  
-  weatherWidgetEnabled Boolean @default(false) @map("weather_enabled")
-  //
-
->>>>>>> fbeee20 (feat: Utility Widgets - schema & migration)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
   agency    Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)

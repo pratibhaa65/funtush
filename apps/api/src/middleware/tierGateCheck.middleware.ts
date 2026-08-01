@@ -31,11 +31,15 @@ export const tierGate =
                         id: agencyUser.agencyId,
                     },
                     include: {
+<<<<<<< HEAD
                         tier: {
                             select: {
                                 name: true
                             }
                         }
+=======
+                        tier: true,
+>>>>>>> 3163da2 (feat: Utility Widgets - tier gate checking middleware)
                     },
                 });
 
