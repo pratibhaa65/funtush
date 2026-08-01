@@ -838,19 +838,6 @@ model AgencyProfile {
   youtubeEnabled   Boolean  @default(false)
   youtubeVideos    String[] @default([])
   maxYoutubeVideos Int?     @default(10)
-  //
-
-  // Marketing Widgets
-
-  googleAnalyticsId String? @map("google_analytics_id")
-
-  facebookPixelId String? @map("facebook_pixel_id")
-
-  instagramConnected Boolean @default(false) @map("instagram_connected")
-  instagramFeedEnabled Boolean @default(false) @map("instagram_feed_enabled")
-  instagramBusinessId String? @map("instagram_business_id")
-  instagramAccessToken String? @map("instagram_access_token") @db.Text
-  instagramTokenExpiresAt DateTime @map("instagram_token_expires_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -881,6 +868,17 @@ model KycSubmission {
 }
 
 model KycDocument {
+  id        String          @id @default(uuid())
+  kycId     String          @map("kyc_id")
+  type      KycDocumentType
+  fileUrl   String          @map("file_url")
+  createdAt DateTime        @default(now()) @map("created_at")
+  kyc       KycSubmission   @relation(fields: [kycId], references: [id], onDelete: Cascade)
+
+  @@map("kyc_documents")
+}
+
+model KygoogleAnalyticsIdcDocument {
   id        String          @id @default(uuid())
   kycId     String          @map("kyc_id")
   type      KycDocumentType
