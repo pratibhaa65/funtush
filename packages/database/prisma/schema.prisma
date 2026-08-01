@@ -821,13 +821,11 @@ model AgencyProfile {
 
   facebookPixelId String? @map("facebook_pixel_id")
 
-<<<<<<< HEAD
   instagramConnected      Boolean   @default(false) @map("instagram_connected")
   instagramFeedEnabled    Boolean   @default(false) @map("instagram_feed_enabled")
   instagramBusinessId     String?   @map("instagram_business_id")
   instagramAccessToken    String?   @map("instagram_access_token") @db.Text
   instagramTokenExpiresAt DateTime? @map("instagram_token_expires_at")
-  //
 
   //Utility Widgets
   currencyConverterEnabled Boolean @default(false) @map("currency_converter_enabled")
@@ -839,13 +837,6 @@ model AgencyProfile {
   youtubeEnabled   Boolean  @default(false)
   youtubeVideos    String[] @default([])
   maxYoutubeVideos Int?     @default(10)
-=======
-  instagramConnected Boolean @default(false) @map("instagram_connected")
-  instagramFeedEnabled Boolean @default(false) @map("instagram_feed_enabled")
-  instagramBusinessId String? @map("instagram_business_id")
-  instagramAccessToken String? @map("instagram_access_token") @db.Text
-  instagramTokenExpiresAt DateTime? @map("instagram_token_expires_at")
->>>>>>> 248eb0c (fix: resolved lint errors)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

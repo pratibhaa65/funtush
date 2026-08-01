@@ -166,21 +166,6 @@ export const googleAnalyticsWidgetService = async (
         throw new Error("Agency not found");
     }
 
-<<<<<<< HEAD
-    // if (
-    //     data.googleAnalyticsId &&
-    //     agency.tier.name !== "MEDIUM" &&
-    //     agency.tier.name !== "LARGE"
-    // ) {
-    //     throw new Error(
-    //         "Google Analytics is available only for Medium and Large plans."
-    //     );
-    // }
-    if (data.googleAnalyticsId) {
-        if (agency.tier.name !== "MEDIUM" || "LARGE") {
-            throw new Error("Google Analytics is available only for Medium and Large plans.");
-        }
-=======
     if (
         data.googleAnalyticsId &&
         agency.tier.name !== "MEDIUM" &&
@@ -189,7 +174,6 @@ export const googleAnalyticsWidgetService = async (
         throw new Error(
             "Google Analytics is available only for Medium and Large plans."
         );
->>>>>>> 248eb0c (fix: resolved lint errors)
     }
 
     const profile = await db.agencyProfile.update({
@@ -238,21 +222,6 @@ export const facebookPixelWidgetService = async (
         throw new Error("Agency not found");
     }
 
-<<<<<<< HEAD
-    // if (
-    //     data.facebookPixelId &&
-    //     agency.tier.name !== "MEDIUM" &&
-    //     agency.tier.name !== "LARGE"
-    // ) {
-    //     throw new Error(
-    //         "Facebook pixel is available only for Medium and Large plans."
-    //     );
-    // }
-    if (data.facebookPixelId) {
-        if (agency.tier.name !== "MEDIUM" || "LARGE") {
-            throw new Error("Facebook pixel is available only for Medium and Large plans.");
-        }
-=======
     if (
         data.facebookPixelId &&
         agency.tier.name !== "MEDIUM" &&
@@ -261,7 +230,6 @@ export const facebookPixelWidgetService = async (
         throw new Error(
             "Facebook pixel is available only for Medium and Large plans."
         );
->>>>>>> 248eb0c (fix: resolved lint errors)
     }
 
     const profile = await db.agencyProfile.update({
