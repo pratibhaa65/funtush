@@ -2,13 +2,18 @@ import { Request, Response } from "express";
 import { convertCurrencyService, updateCurrencyConverterWidgetService } from "src/services/widgets/currencyConverter.service";
 
 
+<<<<<<< HEAD
 export const currencyConverterWidgetController = async (
+=======
+export const updateCurrencyConverterWidgetController = async (
+>>>>>>> 5b75f9d (feat: Utility Widgets - currency converter controller)
     req: Request,
     res: Response
 ) => {
     try {
         const agencyUserId = req.tenantId as string;
 
+<<<<<<< HEAD
         const { enabled } = req.body;
 
         if (typeof enabled !== "boolean") {
@@ -18,6 +23,8 @@ export const currencyConverterWidgetController = async (
             });
         }
 
+=======
+>>>>>>> 5b75f9d (feat: Utility Widgets - currency converter controller)
         const widget = await updateCurrencyConverterWidgetService(
             agencyUserId,
             req.body
@@ -25,7 +32,11 @@ export const currencyConverterWidgetController = async (
 
         return res.status(200).json({
             success: true,
+<<<<<<< HEAD
             message: widget.currencyConverterEnabled
+=======
+            message:  widget.currencyConverterEnabled
+>>>>>>> 5b75f9d (feat: Utility Widgets - currency converter controller)
                 ? "Currency Converter enabled successfully."
                 : "Currency Converter disabled successfully.",
             data: widget,
