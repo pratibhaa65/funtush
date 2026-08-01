@@ -1,9 +1,5 @@
 import type { Request, Response } from "express";
-<<<<<<< HEAD
 import { facebookPixelWidgetService, getWidgetsService, googleAnalyticsWidgetService, livechatWidgetService, whatsappWidgetService } from "src/services/widgets/widgets.service";
-=======
-import { facebookPixelWidgetService, googleAnalyticsWidgetService, livechatWidgetService, whatsappWidgetService } from "src/services/widgets/widgets.service";
->>>>>>> da92eb8 (feat: Marketing/Analytics Widgets controller)
 
 export const whatsappWidgetController = async (
     req: Request,
@@ -113,7 +109,6 @@ export const facebookPixelWidgetController = async (
     }
 };
 
-<<<<<<< HEAD
 export const getWidgetsController = async (
     req: Request,
     res: Response
@@ -138,5 +133,3 @@ export const getWidgetsController = async (
         });
     }
 };
-=======
->>>>>>> da92eb8 (feat: Marketing/Analytics Widgets controller)
