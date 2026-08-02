@@ -826,6 +826,7 @@ model AgencyProfile {
   instagramBusinessId     String?   @map("instagram_business_id")
   instagramAccessToken    String?   @map("instagram_access_token") @db.Text
   instagramTokenExpiresAt DateTime? @map("instagram_token_expires_at")
+  //
 
   //Utility Widgets
   currencyConverterEnabled Boolean @default(false) @map("currency_converter_enabled")
