@@ -48,11 +48,15 @@ export const updateYoutubeWidgetService = async (
             id: agencyUser.agencyId
         },
         include: {
+<<<<<<< HEAD
             tier: {
                 select: {
                     name: true
                 }
             }
+=======
+            tier: true
+>>>>>>> 66a0766 (feat: YouTube Embeds service)
         }
     });
 
@@ -60,11 +64,19 @@ export const updateYoutubeWidgetService = async (
         throw new Error("Agency not found.");
     }
 
+<<<<<<< HEAD
     // if (!["MEDIUM", "LARGE"].includes(agency.tier.name)) {
     //     throw new Error(
     //         "YouTube widget is available only for Medium and Large plans."
     //     );
     // }
+=======
+    if (!["MEDIUM", "LARGE"].includes(agency.tier.name)) {
+        throw new Error(
+            "YouTube widget is available only for Medium and Large plans."
+        );
+    }
+>>>>>>> 66a0766 (feat: YouTube Embeds service)
 
     const videoCount = await db.agencyProfile.findFirst({
         where: {
@@ -101,7 +113,11 @@ export const updateYoutubeWidgetService = async (
         ids.add(id);
     }
 
+<<<<<<< HEAD
     const updatedData= await db.agencyProfile.update({
+=======
+    return await db.agencyProfile.update({
+>>>>>>> 66a0766 (feat: YouTube Embeds service)
         where: {
             agencyId: agency.id
         },
@@ -114,7 +130,10 @@ export const updateYoutubeWidgetService = async (
             youtubeVideos: true
         }
     });
+<<<<<<< HEAD
     console.log("updatedYTBdata:",updatedData)
+=======
+>>>>>>> 66a0766 (feat: YouTube Embeds service)
 
 };
 
@@ -146,11 +165,19 @@ export const getYoutubeWidgetService = async (
         }
     });
 
+<<<<<<< HEAD
     // if (!profile) {
     //     throw new Error("Agency profile not found.");
     // }
 
     const videos = profile?.youtubeVideos.map((url) => {
+=======
+    if (!profile) {
+        throw new Error("Agency profile not found.");
+    }
+
+    const videos = profile.youtubeVideos.map((url) => {
+>>>>>>> 66a0766 (feat: YouTube Embeds service)
         const id = extractYoutubeVideoId(url);
         return {
             url,
@@ -162,7 +189,11 @@ export const getYoutubeWidgetService = async (
     });
 
     return {
+<<<<<<< HEAD
         youtubeEnabled: profile?.youtubeEnabled,
+=======
+        youtubeEnabled: profile.youtubeEnabled,
+>>>>>>> 66a0766 (feat: YouTube Embeds service)
         youtubeVideos: videos
     };
 
