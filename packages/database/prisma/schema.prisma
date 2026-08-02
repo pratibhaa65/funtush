@@ -835,9 +835,16 @@ model AgencyProfile {
   //
 
   //YouTube Embeds
+<<<<<<< HEAD
   youtubeEnabled   Boolean  @default(false)
   youtubeVideos    String[] @default([])
   maxYoutubeVideos Int?     @default(10)
+=======
+  youtubeEnabled   Boolean @default(false)
+  youtubeVideos    String[] @default([]) 
+  maxYoutubeVideos Int? @default(10)
+  //
+>>>>>>> fbdcd5f (fix: lint error)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

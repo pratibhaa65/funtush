@@ -1,20 +1,15 @@
 import { Router } from "express";
-<<<<<<< HEAD
 import { convertCurrencyController, currencyConverterWidgetController } from "src/controllers/widgets/currencyConverter.controller";
 import { InstagramWidgetController } from "src/controllers/widgets/instagram.controller";
 import { weatherRequestController, weatherWidgetController } from "src/controllers/widgets/weather.controller";
 import { facebookPixelWidgetController, getWidgetsController, googleAnalyticsWidgetController, livechatWidgetController, whatsappWidgetController } from "src/controllers/widgets/widgets.controller";
 import { updateYoutubeWidgetController } from "src/controllers/widgets/youtube.controller";
 import { authenticateWithRefreshToken } from "src/middleware/refreshTokenAuthentication";
-=======
-import { getWidgetsController, livechatWidgetController, whatsappWidgetController } from "src/controllers/widgets/widgets.controller";
->>>>>>> 72e293f (feat: Widget Dashboard - routing)
 import { tierGate } from "src/middleware/tierGateCheck.middleware";
 
 const router = Router();
 
 
-<<<<<<< HEAD
 router.route('/')
     .get(authenticateWithRefreshToken, getWidgetsController);
 
@@ -46,10 +41,6 @@ router.route('/currency-enable')
 
 router.route('/currency-check')
     .patch(authenticateWithRefreshToken, tierGate(["MEDIUM", "LARGE"]), convertCurrencyController);
-=======
-router.route('/agencies/me/widgets')
-    .get(getWidgetsController);
->>>>>>> 72e293f (feat: Widget Dashboard - routing)
 
 router.route('/agencies/me/widgets/whatsapp')
     .patch(whatsappWidgetController);
