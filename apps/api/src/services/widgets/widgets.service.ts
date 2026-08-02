@@ -291,7 +291,6 @@ export const getWidgetsService = async (
         },
     });
 
-<<<<<<< HEAD
     return {
         whatsapp: {
             enabled: profile?.whatsappEnabled,
@@ -332,52 +331,6 @@ export const getWidgetsService = async (
         instagram: {
             connected: profile?.instagramConnected,
             feedEnabled: profile?.instagramFeedEnabled,
-=======
-    if (!profile) {
-        throw new Error("Agency profile not found.");
-    }
-
-    return {
-        whatsapp: {
-            enabled: profile.whatsappEnabled,
-            number: profile.whatsappNumber,
-        },
-
-        googleMaps: {
-            enabled: profile.googleMapsEnabled,
-        },
-
-        liveChat: {
-            enabled: profile.liveChatEnabled,
-            code: profile.liveChatCode,
-        },
-
-        weather: {
-            enabled: profile.weatherWidgetEnabled,
-        },
-
-        currencyConverter: {
-            enabled: profile.currencyConverterEnabled,
-        },
-
-        youtube: {
-            enabled: profile.youtubeEnabled,
-            videos: profile.youtubeVideos,
-            maxVideos: profile.maxYoutubeVideos,
-        },
-
-        googleAnalytics: {
-            id: profile.googleAnalyticsId,
-        },
-
-        facebookPixel: {
-            id: profile.facebookPixelId,
-        },
-
-        instagram: {
-            connected: profile.instagramConnected,
-            feedEnabled: profile.instagramFeedEnabled,
->>>>>>> 54da30f (feat: Widget Dashboard - service)
         },
     };
 };

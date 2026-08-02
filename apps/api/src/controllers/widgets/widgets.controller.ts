@@ -132,4 +132,8 @@ export const getWidgetsController = async (
                     : "Failed to retrieve widgets.",
         });
     }
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> e953e27 (feat: Widget Dashboard - controller)
