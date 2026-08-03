@@ -1,6 +1,10 @@
 import { prisma } from "../packages/database/prisma";
+<<<<<<< HEAD
 import { BugStatus, BugPriority } from "@funtush/database";
 import { notificationService } from "./notificationService";
+=======
+import { BugStatus } from "@funtush/database";
+>>>>>>> 3a3baec (fix: resolve lint and test issues)
 
 export async function submitBug(
   agencyId: string,
@@ -52,6 +56,7 @@ export async function getAgencyBugs(
 
 function isValidBugStatus(value: string): value is BugStatus {
   return Object.values(BugStatus).includes(value as BugStatus);
+<<<<<<< HEAD
 }
 
 export async function setBugPriority(bugId: string, priority: BugPriority) {
@@ -145,4 +150,6 @@ export async function resolveBug(bugId: string, resolutionNote: string) {
   }
 
   return updated;
+=======
+>>>>>>> 3a3baec (fix: resolve lint and test issues)
 }
