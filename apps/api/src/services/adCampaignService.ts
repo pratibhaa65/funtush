@@ -7,7 +7,7 @@ const LARGE_TIER = "LARGE" as const;
 // Thrown by the service; the route maps `.status` onto the HTTP response. */
 export class CampaignError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+constructor(status: number, message: string) {
     super(message);
     this.status = status;
     this.name = "CampaignError";
