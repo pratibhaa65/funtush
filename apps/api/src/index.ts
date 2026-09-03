@@ -42,11 +42,29 @@ import {
 } from "./services/notificationDispatch.service";
 import { db, redis, connectMongo } from "@funtush/database";
 
+import billingRoutes from "./routes/billing.routes.js";
+import stripeWebhookRoutes from "./routes/webhooks/stripe.js";
+import paymentMethodsRoutes from "./routes/paymentMethods.js";
+import adCampaignRoutes from "./routes/adCampaign.routes.js";
+import bugRoutes from "./routes/bug.routes.js";
+import bugAdminRoutes from "./routes/bug.routes.js";
+import apiKeyRoutes from "./routes/apiKey.routes.js";
+import publicApiRoutes from "./routes/publicApi.routes.js";
+import { startExpireUnpaidBookingsCron } from "./jobs/expireUnpaidBookings.job.js";
+import { resolveTenant } from "./middleware/resolveTenant.middleware.js";
+import { rateLimitMiddleware } from "./middleware/rateLimit.middleware.js";
+import reportsRouter from "./routes/agency/reports.route.js";
+import { requestLogger } from "./middleware/requestLogger.middleware.js";
+
+
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
 
 // Middleware
 app.use(express.json());
+app.use(requestLogger);
+app.use(resolveTenant);
+app.use(rateLimitMiddleware);
 
 // Routes
 app.use("/", uploadRoutes);
@@ -79,6 +97,25 @@ app.use("/auth", authRoutes);
 app.use("/agencies/me/staff", staffRoutes);
 app.use("/admin", adminRoutes);
 app.use("/fraud", fraudRouter);
+
+// Billing & Payments
+app.use('/billing', billingRoutes);
+app.use('/webhooks/stripe', stripeWebhookRoutes);
+app.use('/agencies/me/payment-methods', paymentMethodsRoutes);
+
+// Ad Campaigns
+app.use('/agencies/me/ad-campaigns', adCampaignRoutes);
+
+// Bugs & API Keys
+app.use('/agencies/me/bugs', bugRoutes);
+app.use('/admin/bugs', bugAdminRoutes);
+app.use('/agencies/me/api-keys', apiKeyRoutes);
+
+// Public API
+app.use('/public-api/v1', publicApiRoutes);
+
+// Agency Reports
+app.use('/agencies/me/reports', reportsRouter);
 
 // Analytics Routes
 app.use("/", agencyAnalyticsRoutes);
@@ -134,6 +171,7 @@ if (process.env.NODE_ENV !== "test" && !process.env.VITEST) {
   startSubscriptionCron();
   startVisibilityScoreCron();
   startAdPerformanceSyncJob();
+  startExpireUnpaidBookingsCron();
 
   // Ensure Meilisearch indexes + settings exist on boot (idempotent, non-blocking).
   configureIndexes().catch(console.error);
