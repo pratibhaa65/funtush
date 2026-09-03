@@ -878,16 +878,6 @@ model KycDocument {
   @@map("kyc_documents")
 }
 
-model KygoogleAnalyticsIdcDocument {
-  id        String          @id @default(uuid())
-  kycId     String          @map("kyc_id")
-  type      KycDocumentType
-  fileUrl   String          @map("file_url")
-  createdAt DateTime        @default(now()) @map("created_at")
-  kyc       KycSubmission   @relation(fields: [kycId], references: [id], onDelete: Cascade)
-
-  @@map("kyc_documents")
-}
 
 model Subscription {
   id        String             @id @default(uuid())
