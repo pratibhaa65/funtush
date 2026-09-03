@@ -40,7 +40,6 @@ export const updateWeatherWidgetService = async (
         throw new Error("Agency not found.");
     }
 
-<<<<<<< HEAD
     // if (!["MEDIUM", "LARGE"].includes(agency.tier.name)) {
     //     throw new Error(
     //         "Weather widget is available only for Medium and Large plans."
@@ -50,17 +49,6 @@ export const updateWeatherWidgetService = async (
     return await db.agencyProfile.update({
         where: {
             agencyId: agency.id,
-=======
-    if (!["MEDIUM", "LARGE"].includes(agency.tier.name)) {
-        throw new Error(
-            "Weather widget is available only for Medium and Large plans."
-        );
-    }
-
-    return await db.agencyProfile.update({
-        where: {
-            id: agency.id,
->>>>>>> aa9ec06 (feat: Utility Widgets - weather widget service)
         },
         data: {
             weatherWidgetEnabled: data.enabled,
@@ -71,10 +59,6 @@ export const updateWeatherWidgetService = async (
         },
     });
 };
-<<<<<<< HEAD
-
-=======
->>>>>>> aa9ec06 (feat: Utility Widgets - weather widget service)
 export const weatherApiService = async (
     data: WeatherPayload
 ) => {
@@ -109,7 +93,6 @@ export const weatherApiService = async (
         ),
     ]);
 
-<<<<<<< HEAD
     const convertToNepalDateTime = (utcDateTime: string): string => {
         return new Date(utcDateTime + " UTC").toLocaleString("en-GB", {
             timeZone: "Asia/Kathmandu",
@@ -120,12 +103,6 @@ export const weatherApiService = async (
     return {
         city: currentWeather.data.name,
         country: currentWeather.data.sys.country,
-=======
-    return {
-        city: currentWeather.data.name,
-        country: currentWeather.data.sys.country,
-
->>>>>>> aa9ec06 (feat: Utility Widgets - weather widget service)
         current: {
             weather: currentWeather.data.weather[0].description,
             temperature: currentWeather.data.main.temp,
@@ -135,7 +112,6 @@ export const weatherApiService = async (
             visibility: currentWeather.data.visibility,
             windSpeed: currentWeather.data.wind.speed,
         },
-<<<<<<< HEAD
         forecast_combined_1_per_5days: forecastWeather.data.list
             .filter((item: { dt_txt: string }) => {
                 return item.dt_txt.endsWith("06:00:00")
@@ -181,11 +157,6 @@ export const weatherApiService = async (
             }
             ) => ({
                 date: convertToNepalDateTime(item.dt_txt),
-=======
-        forecast: forecastWeather.data.list.slice(0, 5).map(
-            (item: any) => ({
-                date: item.dt_txt,
->>>>>>> aa9ec06 (feat: Utility Widgets - weather widget service)
                 weather: item.weather[0].description,
                 temperature: item.main.temp,
                 feelsLike: item.main.feels_like,
